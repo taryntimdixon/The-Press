@@ -7707,7 +7707,7 @@ function enhanceBreakingStrip(stories) {
   }
 
   function getBelowFoldDomScrollGeometry(strip, canvas) {
-    const phone = getBelowFoldScrollPhoneFrame(canvas);
+    const phone = getBelowFoldScrollPhoneFrame(canvas, strip);
     const stripWidth = strip.width || strip.canvas.width || 390;
     const stripHeight = strip.height || strip.canvas.height || 2400;
     const scale = phone.width / stripWidth;
@@ -7723,9 +7723,19 @@ function enhanceBreakingStrip(stories) {
     };
   }
 
-  function getBelowFoldScrollPhoneFrame(canvas) {
+  function getBelowFoldScrollPhoneFrame(canvas, strip = null) {
     const canvasWidth = canvas?.width || 1080;
     const canvasHeight = canvas?.height || 1920;
+    if (strip?.source === 'article-pages') {
+      return {
+        x: 0,
+        y: 0,
+        width: canvasWidth,
+        height: canvasHeight,
+        radius: 0,
+        fullBleed: true,
+      };
+    }
     if (canvasWidth >= canvasHeight) {
       return {
         x: 44,
@@ -7754,7 +7764,12 @@ function enhanceBreakingStrip(stories) {
     ctx.drawImage(backdrop, 0, 0);
 
     ctx.save();
-    roundRectPath(ctx, phone.x, phone.y, phone.width, phone.height, phone.radius);
+    if (phone.radius > 0) {
+      roundRectPath(ctx, phone.x, phone.y, phone.width, phone.height, phone.radius);
+    } else {
+      ctx.beginPath();
+      ctx.rect(phone.x, phone.y, phone.width, phone.height);
+    }
     ctx.clip();
     drawBelowFoldDomStripSlice(ctx, strip, {
       sourceY,
@@ -7770,7 +7785,8 @@ function enhanceBreakingStrip(stories) {
 
   function getBelowFoldDomFrameBackdrop(strip, width, height, phone) {
     const theme = strip.theme || getBelowFoldScrollStoryColorway();
-    const key = `${theme.key}:${width}x${height}:${phone.x},${phone.y},${phone.width},${phone.height},${phone.radius}`;
+    const isFullBleed = Boolean(phone.fullBleed);
+    const key = `${theme.key}:${width}x${height}:${phone.x},${phone.y},${phone.width},${phone.height},${phone.radius}:${isFullBleed ? 'full' : 'frame'}`;
     if (strip._frameBackdrop?.key === key) return strip._frameBackdrop.canvas;
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -7783,6 +7799,11 @@ function enhanceBreakingStrip(stories) {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
     drawPaperGrain(ctx, width, height, theme.frameGrain, theme.frameGrainAlpha);
+
+    if (isFullBleed) {
+      strip._frameBackdrop = { key, canvas };
+      return canvas;
+    }
 
     ctx.save();
     ctx.shadowColor = theme.phoneShadow;
