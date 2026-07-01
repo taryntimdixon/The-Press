@@ -3730,7 +3730,7 @@ function enhanceBreakingStrip(stories) {
   ];
   const HOMEPAGE_SOCIAL_SHARE_STORAGE_PREFIX = 'press-homepage-social-share';
   const BELOW_FOLD_SCROLL_STORY_ASSET_CACHE = new Map();
-  const ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER = (1778 / 1125) / 1.05;
+  const ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER = (1778 / 1125) / (1.05 * 1.10);
   const ARTICLE_SCROLL_STORY_PAGE_FILL_SCALE = 1.08;
   const ARTICLE_SCROLL_STORY_MOBILE_SHARE_LIMIT_BYTES = 90 * 1024 * 1024;
   const ARTICLE_SCROLL_READER_LIMITS = Object.freeze({
@@ -9003,17 +9003,8 @@ function enhanceBreakingStrip(stories) {
     const asset = modal?._pressInstagramStoryAsset;
     if (asset?.kind === 'video' && asset.blob) {
       if (isContinuousArticleScrollContext(context)) {
-        if (isMobileShareDevice()) {
-          setInstagramStoryStatus(status, 'Opening Save Video options...');
-          const shared = await shareInstagramStoryBlob(asset.blob, asset.filename, context, status, {
-            allowLargeVideo: true,
-            successMessage: 'Choose Save Video to save it to Photos.',
-            cancelMessage: 'Save sheet closed. Starting a device download.',
-          });
-          if (shared) return true;
-        }
         return downloadInstagramStoryBlobAsset(asset, status, isMobileShareDevice()
-          ? 'Device download started. For Photos, tap Share video and choose Save Video.'
+          ? 'Video download started. Open it from Downloads or Files.'
           : 'Video download started.');
       }
       if (isMobileShareDevice()) {
@@ -9041,11 +9032,12 @@ function enhanceBreakingStrip(stories) {
       const platform = getScrollStoryPlatformMeta(context.scrollStoryPlatform);
       const saveToPhotosMode = isContinuousArticleScrollContext(context) && isMobileShareDevice();
       const shared = await shareInstagramStoryBlob(asset.blob, asset.filename, context, status, {
-        allowLargeVideo: saveToPhotosMode,
         successMessage: saveToPhotosMode
-          ? 'Choose Save Video to save it to Photos.'
+          ? 'Share sheet opened. Choose Save Video if it appears.'
           : `Share sheet opened. Choose ${platform.label} if it appears.`,
-        cancelMessage: 'Video share did not open. Starting download.',
+        cancelMessage: saveToPhotosMode
+          ? 'Video is large, so starting a safer download.'
+          : 'Video share did not open. Starting download.',
       });
       if (shared) return true;
       return downloadInstagramStoryBlobAsset(asset, status, 'Video sharing was blocked here, so the download started.');
