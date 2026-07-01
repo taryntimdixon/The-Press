@@ -3731,6 +3731,7 @@ function enhanceBreakingStrip(stories) {
   const HOMEPAGE_SOCIAL_SHARE_STORAGE_PREFIX = 'press-homepage-social-share';
   const BELOW_FOLD_SCROLL_STORY_ASSET_CACHE = new Map();
   const ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER = 1778 / 1125;
+  const ARTICLE_SCROLL_STORY_PAGE_FILL_SCALE = 1.08;
   const ARTICLE_SCROLL_READER_LIMITS = Object.freeze({
     maxSections: 14,
     maxFigureSections: 7,
@@ -5808,12 +5809,13 @@ function enhanceBreakingStrip(stories) {
       figure.classList.add('press-article-scroll-reader__figure--hero');
       header.appendChild(figure);
     }
-    root.appendChild(header);
-
     const continuousFlow = buildContinuousArticleScrollFlow();
     if (continuousFlow) {
+      root.classList.add('press-article-scroll-reader--ny-love');
       root.appendChild(continuousFlow);
+      return root;
     } else {
+      root.appendChild(header);
       collectArticleScrollSegments().forEach((segment, index) => {
         const section = buildArticleScrollSection(segment, index);
         if (section) root.appendChild(section);
@@ -6908,6 +6910,10 @@ function enhanceBreakingStrip(stories) {
         white-space:normal !important;
         overflow-wrap:break-word !important;
       }
+      .press-scroll-capture-shell .press-article-scroll-reader.press-article-scroll-reader--ny-love{
+        padding:0 !important;
+        background:#ece1cf !important;
+      }
       .press-scroll-capture-shell .press-article-scroll-reader,
       .press-scroll-capture-shell .press-article-scroll-reader *{
         direction:ltr !important;
@@ -7710,9 +7716,12 @@ function enhanceBreakingStrip(stories) {
     const phone = getBelowFoldScrollPhoneFrame(canvas, strip);
     const stripWidth = strip.width || strip.canvas.width || 390;
     const stripHeight = strip.height || strip.canvas.height || 2400;
-    const scale = phone.width / stripWidth;
+    const fillScale = phone.fillScale || 1;
+    const scale = (phone.width / stripWidth) * fillScale;
     const sourceHeight = phone.height / scale;
     const maxScroll = Math.max(0, stripHeight - sourceHeight);
+    const destWidth = stripWidth * scale;
+    const destX = phone.x + ((phone.width - destWidth) / 2);
     return {
       phone,
       stripWidth,
@@ -7720,13 +7729,19 @@ function enhanceBreakingStrip(stories) {
       scale,
       sourceHeight,
       maxScroll,
+      destX,
+      destWidth,
     };
+  }
+
+  function isArticleScrollFullBleedStrip(strip) {
+    return typeof strip?.source === 'string' && strip.source.indexOf('article-') === 0;
   }
 
   function getBelowFoldScrollPhoneFrame(canvas, strip = null) {
     const canvasWidth = canvas?.width || 1080;
     const canvasHeight = canvas?.height || 1920;
-    if (strip?.source === 'article-pages') {
+    if (isArticleScrollFullBleedStrip(strip)) {
       return {
         x: 0,
         y: 0,
@@ -7734,6 +7749,7 @@ function enhanceBreakingStrip(stories) {
         height: canvasHeight,
         radius: 0,
         fullBleed: true,
+        fillScale: ARTICLE_SCROLL_STORY_PAGE_FILL_SCALE,
       };
     }
     if (canvasWidth >= canvasHeight) {
@@ -7757,7 +7773,7 @@ function enhanceBreakingStrip(stories) {
   function drawBelowFoldDomScrollFrame(ctx, strip, progress) {
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
-    const { phone, stripWidth, stripHeight, scale, sourceHeight, maxScroll } = getBelowFoldDomScrollGeometry(strip, ctx.canvas);
+    const { phone, stripWidth, stripHeight, scale, sourceHeight, maxScroll, destX, destWidth } = getBelowFoldDomScrollGeometry(strip, ctx.canvas);
     const sourceY = maxScroll * Math.max(0, Math.min(1, progress || 0));
 
     const backdrop = getBelowFoldDomFrameBackdrop(strip, width, height, phone);
@@ -7774,9 +7790,9 @@ function enhanceBreakingStrip(stories) {
     drawBelowFoldDomStripSlice(ctx, strip, {
       sourceY,
       sourceHeight: Math.min(sourceHeight, stripHeight - sourceY),
-      destX: phone.x,
+      destX,
       destY: phone.y,
-      destWidth: phone.width,
+      destWidth,
       scale,
       stripWidth,
     });
@@ -7786,7 +7802,7 @@ function enhanceBreakingStrip(stories) {
   function getBelowFoldDomFrameBackdrop(strip, width, height, phone) {
     const theme = strip.theme || getBelowFoldScrollStoryColorway();
     const isFullBleed = Boolean(phone.fullBleed);
-    const key = `${theme.key}:${width}x${height}:${phone.x},${phone.y},${phone.width},${phone.height},${phone.radius}:${isFullBleed ? 'full' : 'frame'}`;
+    const key = `${theme.key}:${width}x${height}:${phone.x},${phone.y},${phone.width},${phone.height},${phone.radius}:${phone.fillScale || 1}:${isFullBleed ? 'full' : 'frame'}`;
     if (strip._frameBackdrop?.key === key) return strip._frameBackdrop.canvas;
     const canvas = document.createElement('canvas');
     canvas.width = width;
