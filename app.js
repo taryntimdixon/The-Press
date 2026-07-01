@@ -3732,7 +3732,7 @@ function enhanceBreakingStrip(stories) {
   const BELOW_FOLD_SCROLL_STORY_ASSET_CACHE = new Map();
   const ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER = (1778 / 1125) / (1.05 * 1.10);
   const ARTICLE_SCROLL_STORY_PAGE_FILL_SCALE = 1.08;
-  const ARTICLE_SCROLL_STORY_MOBILE_SHARE_LIMIT_BYTES = 90 * 1024 * 1024;
+  const ARTICLE_SCROLL_STORY_MOBILE_SHARE_LIMIT_BYTES = 180 * 1024 * 1024;
   const ARTICLE_SCROLL_READER_LIMITS = Object.freeze({
     maxSections: 14,
     maxFigureSections: 7,
@@ -3774,6 +3774,7 @@ function enhanceBreakingStrip(stories) {
     scrollPixelsPerSecond: 269,
     frameRate: 30,
     videoBitsPerSecond: 16000000,
+    mobileVideoBitsPerSecond: 8000000,
   });
   const BELOW_FOLD_SCROLL_STORY_CRITERIA = Object.freeze({
     maxCards: 12,
@@ -7995,9 +7996,12 @@ function enhanceBreakingStrip(stories) {
   }
 
   function getBelowFoldScrollVideoBitsPerSecond(context) {
-    return context?.type === 'article'
-      ? getArticleScrollReaderLimits(context).videoBitsPerSecond
-      : BELOW_FOLD_SCROLL_STORY_CRITERIA.videoBitsPerSecond;
+    if (context?.type !== 'article') return BELOW_FOLD_SCROLL_STORY_CRITERIA.videoBitsPerSecond;
+    const limits = getArticleScrollReaderLimits(context);
+    if (isContinuousArticleScrollContext(context) && isMobileShareDevice()) {
+      return limits.mobileVideoBitsPerSecond || limits.videoBitsPerSecond;
+    }
+    return limits.videoBitsPerSecond;
   }
 
   function getArticleScrollReaderLimits(context) {
@@ -9003,8 +9007,17 @@ function enhanceBreakingStrip(stories) {
     const asset = modal?._pressInstagramStoryAsset;
     if (asset?.kind === 'video' && asset.blob) {
       if (isContinuousArticleScrollContext(context)) {
+        if (isMobileShareDevice()) {
+          setInstagramStoryStatus(status, 'Opening Save Video options...');
+          const shared = await shareInstagramStoryBlob(asset.blob, asset.filename, context, status, {
+            requirePhotosCompatibleVideo: true,
+            successMessage: 'Choose Save Video to save it to Photos.',
+            cancelMessage: 'Save Video did not open. Starting a device download.',
+          });
+          if (shared) return true;
+        }
         return downloadInstagramStoryBlobAsset(asset, status, isMobileShareDevice()
-          ? 'Video download started. Open it from Downloads or Files.'
+          ? 'Device download started. If Photos did not appear, the video may be too large for iOS sharing.'
           : 'Video download started.');
       }
       if (isMobileShareDevice()) {
@@ -9167,6 +9180,10 @@ function enhanceBreakingStrip(stories) {
       return false;
     }
     const fileType = getInstagramStoryVideoFileMimeType(blob.type || filename || '');
+    if (options.requirePhotosCompatibleVideo && !/mp4/i.test(fileType)) {
+      setInstagramStoryStatus(status, options.cancelMessage || 'Photos save needs an MP4 video. Starting download.');
+      return false;
+    }
     let file;
     try {
       file = new File([blob], filename || `the-press-instagram-story${getInstagramStoryVideoFileExtension(fileType)}`, { type: fileType });
