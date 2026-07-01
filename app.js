@@ -3799,6 +3799,7 @@ function enhanceBreakingStrip(stories) {
     const belowFoldIssueNav = document.querySelector('.page-below-fold-issue .below-fold-issue-nav');
     const articleHero = document.querySelector('.article-hero');
     const articleFolioShare = articleHero?.querySelector('[data-article-folio-share]');
+    const articlePageShare = document.querySelector('[data-article-page-share]');
     const articleMeta = articleHero?.querySelector('.article-meta');
     const articleBody = document.querySelector('[data-article-body], .article-body, .generated-story');
     const articleHeadline = document.querySelector('.article-headline, .article-title, h1');
@@ -3808,7 +3809,7 @@ function enhanceBreakingStrip(stories) {
       : (articleHero || articleBody || articleHeadline) && !document.body.classList.contains('page-home')
       ? 'article'
       : (homeIntro ? 'site' : '');
-    const target = belowFoldIssueNav || belowFoldIssueHeader || articleFolioShare || articleMeta || articleBody || homeIntro;
+    const target = belowFoldIssueNav || belowFoldIssueHeader || articlePageShare || articleFolioShare || articleMeta || articleBody || homeIntro;
     if (!contextType || !target) return;
 
     const context = buildShareContext(contextType);
@@ -3827,7 +3828,7 @@ function enhanceBreakingStrip(stories) {
     shareRow.setAttribute('data-share-url', context.url);
     shareRow.innerHTML = buildShareRowMarkup(context);
 
-    if (belowFoldIssueHeader || articleFolioShare) {
+    if (belowFoldIssueHeader || articlePageShare || articleFolioShare) {
       target.appendChild(shareRow);
     } else if (articleMeta) {
       articleMeta.insertAdjacentElement('afterend', shareRow);

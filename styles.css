@@ -10299,6 +10299,57 @@ body.page-article:has(.press-social-feature)::before{
   }
 }
 
+@media (max-width:380px){
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line{
+    gap:.14rem;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row{
+    gap:.16rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__buttons{
+    gap:.08rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn{
+    flex-basis:1.36rem !important;
+    width:1.36rem !important;
+    height:1.36rem !important;
+    min-width:1.36rem !important;
+    min-height:1.36rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn__icon,
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn__icon svg{
+    width:.7rem !important;
+    height:.7rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__scroll-choice summary,
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu__toggle{
+    min-height:1.36rem !important;
+    padding:.14rem .24rem !important;
+    font-size:.52rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__scroll-choice summary{
+    width:1.36rem !important;
+    min-width:1.36rem !important;
+    padding:0 !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__scroll-choice summary span:not(.share-btn__icon){
+    display:none !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu__toggle::after{
+    width:.72rem !important;
+    height:.72rem !important;
+    font-size:.58rem !important;
+  }
+}
+
 .press-chart-lightbox{
   position:fixed;
   inset:0;
@@ -29812,6 +29863,7 @@ body.page-article.page-article--heritage .article.article--heritage:has(.ny-love
 }
 
 body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) > .article-hero{
+  display:none !important;
   width:min(100%, 94rem) !important;
   margin:clamp(.45rem, 1.2vw, 1rem) auto clamp(.75rem, 1.7vw, 1.35rem) !important;
   padding:clamp(.72rem, 1.8vw, 1.45rem) !important;
@@ -29828,6 +29880,209 @@ body.page-article.page-article--heritage .article.article--heritage:has(.ny-love
     #f7efe1 !important;
   color:#171411 !important;
   box-shadow:0 24px 70px rgba(45,35,22,.14) !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) > .article-shell{
+  margin-top:0 !important;
+  padding-top:0 !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .article-body--heritage{
+  padding-top:0 !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-folio{
+  display:none !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line{
+  position:relative;
+  z-index:8;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:.36rem;
+  width:min(100%, 75rem);
+  margin:0 auto .35rem;
+  padding:.28rem 0;
+  overflow:visible;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line::-webkit-scrollbar{
+  display:none;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row{
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:.4rem !important;
+  width:max-content !important;
+  min-width:min(100%, 100%) !important;
+  margin:0 !important;
+  text-align:center !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__buttons{
+  flex:0 0 auto !important;
+  flex-wrap:nowrap !important;
+  justify-content:center !important;
+  width:auto !important;
+  gap:.24rem !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn{
+  flex:0 0 1.92rem !important;
+  width:1.92rem !important;
+  height:1.92rem !important;
+  min-width:1.92rem !important;
+  min-height:1.92rem !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-home-link{
+  background:#f7efe1 !important;
+  color:#171411 !important;
+  border-color:rgba(23,20,17,.35) !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn__icon,
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn__icon svg{
+  width:.94rem !important;
+  height:.94rem !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__scroll-choice{
+  flex:0 0 auto !important;
+  margin:0 !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__scroll-choice summary{
+  min-height:1.92rem !important;
+  padding:.28rem .46rem !important;
+  font-size:.66rem !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__scroll-choice > .share-row__buttons--scroll-video{
+  right:0 !important;
+  left:auto !important;
+  transform:none !important;
+  justify-content:center !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu{
+  position:relative;
+  flex:0 0 auto;
+  width:auto !important;
+  margin:0 !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu__toggle{
+  display:inline-flex !important;
+  width:auto !important;
+  min-height:1.92rem !important;
+  gap:.42rem !important;
+  padding:.28rem .5rem !important;
+  border-radius:999px !important;
+  background:#f7efe1 !important;
+  font-size:.66rem !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu__toggle::after{
+  width:1.1rem !important;
+  height:1.1rem !important;
+  border-radius:50% !important;
+  font-size:.76rem !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu__toggle span:last-child{
+  display:none !important;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-dynamic-nav{
+  position:absolute;
+  top:calc(100% + .35rem);
+  right:0;
+  z-index:12;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(8.5rem, 1fr));
+  width:min(34rem, calc(100vw - 1rem));
+  max-height:min(70vh, 32rem);
+  overflow:auto;
+  padding:.5rem;
+  border:1px solid rgba(23,20,17,.26);
+  background:#f7efe1;
+  box-shadow:0 18px 44px rgba(23,20,17,.18);
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu:not(.is-open) .ny-love-dynamic-nav{
+  display:none;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu[data-page-menu-ready="true"]:not(.is-open) .ny-love-dynamic-nav{
+  display:none;
+}
+
+body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu.is-open .ny-love-dynamic-nav{
+  display:grid;
+}
+
+@media (max-width:560px){
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line{
+    gap:.22rem;
+    align-items:center;
+    overflow:visible;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row{
+    gap:.24rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__buttons{
+    gap:.13rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn{
+    flex-basis:1.55rem !important;
+    width:1.55rem !important;
+    height:1.55rem !important;
+    min-width:1.55rem !important;
+    min-height:1.55rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn__icon,
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-btn__icon svg{
+    width:.78rem !important;
+    height:.78rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .share-row__scroll-choice summary,
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu__toggle{
+    min-height:1.55rem !important;
+    padding:.18rem .32rem !important;
+    font-size:.58rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu__toggle{
+    gap:.24rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-page-menu__toggle::after{
+    width:.88rem !important;
+    height:.88rem !important;
+    font-size:.68rem !important;
+  }
+
+  body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) .ny-love-share-line .ny-love-dynamic-nav{
+    position:fixed;
+    top:3.4rem;
+    right:.5rem;
+    left:.5rem;
+    grid-template-columns:1fr;
+    width:auto;
+    max-height:min(72vh, 34rem);
+  }
 }
 
 body.page-article.page-article--heritage .article.article--heritage:has(.ny-love-letter-feature) > .article-hero > .article-folio{
