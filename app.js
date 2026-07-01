@@ -4749,7 +4749,7 @@ function enhanceBreakingStrip(stories) {
       hideBelowFoldLiveScrollPreview(modal);
       modal._pressInstagramStoryAsset = asset;
       rememberBelowFoldScrollStoryAsset(colorContext, asset);
-      setInstagramStoryAssetActionLabels(modal, asset?.kind || 'image');
+      setInstagramStoryAssetActionLabels(modal, asset?.kind || 'image', colorContext);
       setInstagramStoryActionsDisabled(modal, false);
       setInstagramStoryStyleControlsDisabled(modal, false);
       setInstagramStoryStatus(status, asset?.kind === 'video'
@@ -4764,7 +4764,7 @@ function enhanceBreakingStrip(stories) {
       if (video) video.hidden = true;
       canvas.hidden = false;
       modal._pressInstagramStoryAsset = { kind: 'image', canvas };
-      setInstagramStoryAssetActionLabels(modal, 'image');
+      setInstagramStoryAssetActionLabels(modal, 'image', colorContext);
       setInstagramStoryStatus(status, 'Story image ready with fallback art.');
       return false;
     }).finally(() => {
@@ -8994,13 +8994,14 @@ function enhanceBreakingStrip(stories) {
     });
   }
 
-  function setInstagramStoryAssetActionLabels(modal, kind) {
+  function setInstagramStoryAssetActionLabels(modal, kind, context) {
     if (!modal) return;
     const isVideo = kind === 'video';
+    const saveToPhotosMode = isVideo && isContinuousArticleScrollContext(context) && isMobileShareDevice();
     const nativeButton = modal.querySelector('[data-instagram-story-native]');
     const downloadButton = modal.querySelector('[data-instagram-story-download]');
-    if (nativeButton) nativeButton.textContent = isVideo ? 'Share video' : 'Share image';
-    if (downloadButton) downloadButton.textContent = isVideo ? 'Save video' : 'Save to device';
+    if (nativeButton) nativeButton.textContent = saveToPhotosMode ? 'Share / Save Video' : (isVideo ? 'Share video' : 'Share image');
+    if (downloadButton) downloadButton.textContent = saveToPhotosMode ? 'Save Video to Photos' : (isVideo ? 'Save video' : 'Save to device');
   }
 
   async function saveInstagramStoryStudioAsset(modal, canvas, context, status) {
@@ -9011,10 +9012,12 @@ function enhanceBreakingStrip(stories) {
           setInstagramStoryStatus(status, 'Opening Save Video options...');
           const shared = await shareInstagramStoryBlob(asset.blob, asset.filename, context, status, {
             requirePhotosCompatibleVideo: true,
+            fileOnly: true,
             successMessage: 'Choose Save Video to save it to Photos.',
-            cancelMessage: 'Save Video did not open. Starting a device download.',
+            cancelMessage: 'Save Video did not open. Tap Share / Save Video and choose Save Video.',
           });
           if (shared) return true;
+          return false;
         }
         return downloadInstagramStoryBlobAsset(asset, status, isMobileShareDevice()
           ? 'Device download started. If Photos did not appear, the video may be too large for iOS sharing.'
@@ -9045,14 +9048,17 @@ function enhanceBreakingStrip(stories) {
       const platform = getScrollStoryPlatformMeta(context.scrollStoryPlatform);
       const saveToPhotosMode = isContinuousArticleScrollContext(context) && isMobileShareDevice();
       const shared = await shareInstagramStoryBlob(asset.blob, asset.filename, context, status, {
+        requirePhotosCompatibleVideo: saveToPhotosMode,
+        fileOnly: saveToPhotosMode,
         successMessage: saveToPhotosMode
-          ? 'Share sheet opened. Choose Save Video if it appears.'
+          ? 'Choose Save Video to save it to Photos.'
           : `Share sheet opened. Choose ${platform.label} if it appears.`,
         cancelMessage: saveToPhotosMode
-          ? 'Video is large, so starting a safer download.'
+          ? 'Save Video did not open. The phone may be blocking this file.'
           : 'Video share did not open. Starting download.',
       });
       if (shared) return true;
+      if (saveToPhotosMode) return false;
       return downloadInstagramStoryBlobAsset(asset, status, 'Video sharing was blocked here, so the download started.');
     }
     return nativeShareInstagramStoryCanvas(canvas, context, status);
@@ -9192,11 +9198,11 @@ function enhanceBreakingStrip(stories) {
       setInstagramStoryStatus(status, options.cancelMessage || 'Video share could not prepare. Starting download.');
       return false;
     }
-    const shareData = {
-      files: [file],
-      title: context.title,
-      text: context.url,
-    };
+    const shareData = { files: [file] };
+    if (!options.fileOnly) {
+      shareData.title = context.title;
+      shareData.text = context.url;
+    }
 
     const canAskForFileShare = !navigator.canShare || navigator.canShare({ files: [file] });
     if (!canAskForFileShare) return false;
