@@ -3758,7 +3758,7 @@ function enhanceBreakingStrip(stories) {
     maxFigureSections: 26,
     maxParagraphsPerSection: 1,
     paragraphExcerptCharacters: 220,
-    stripScale: 2.25,
+    stripScale: 2.72,
     maxCanvasHeight: 30000,
     heroImageMinHeight: 250,
     heroImageMaxHeight: 500,
@@ -3773,7 +3773,7 @@ function enhanceBreakingStrip(stories) {
     maxDurationSeconds: 127,
     scrollPixelsPerSecond: 269,
     frameRate: 30,
-    videoBitsPerSecond: 9000000,
+    videoBitsPerSecond: 16000000,
   });
   const BELOW_FOLD_SCROLL_STORY_CRITERIA = Object.freeze({
     maxCards: 12,
@@ -4826,7 +4826,7 @@ function enhanceBreakingStrip(stories) {
     });
 
     if (continuousArticleScroll) updateBelowFoldLiveScrollPreviewProgress(modal, 0);
-    recorder.start(1000);
+    recorder.start(continuousArticleScroll ? 500 : 1000);
     drawBelowFoldScrollFrame(ctx, strip, 0);
     streamVideoTrack?.requestFrame?.();
     await waitForNextScrollPreviewFrame();
@@ -8054,11 +8054,11 @@ function enhanceBreakingStrip(stories) {
     const total = options.total || (holdStart + duration + holdBottom + returnDuration + holdEnd);
     const frameDelay = options.frameDelay || (1000 / Math.max(2, Math.min(60, options.frameRate || 60)));
     const startedAt = performance.now();
+    const totalFrames = Math.max(1, Math.ceil(total / frameDelay));
 
     return (async () => {
-      let frameIndex = 0;
-      while (true) {
-        const elapsed = Math.min(total, Math.max(0, performance.now() - startedAt));
+      for (let frameIndex = 0; frameIndex <= totalFrames; frameIndex += 1) {
+        const elapsed = Math.min(total, frameIndex * frameDelay);
         const progress = getBelowFoldScrollAnimationProgress(elapsed, {
           duration,
           holdStart,
@@ -8067,10 +8067,9 @@ function enhanceBreakingStrip(stories) {
         });
         drawBelowFoldScrollFrame(ctx, strip, progress);
         options.onFrame?.(progress);
-        if (elapsed >= total) break;
+        if (elapsed >= total || frameIndex >= totalFrames) break;
 
-        frameIndex = Math.max(frameIndex + 1, Math.floor(elapsed / frameDelay) + 1);
-        const targetFrameAt = startedAt + (frameIndex * frameDelay);
+        const targetFrameAt = startedAt + ((frameIndex + 1) * frameDelay);
         await waitForBelowFoldAnimationDelay(Math.max(0, targetFrameAt - performance.now()));
       }
       const finalProgress = returnDuration ? 0 : 1;
