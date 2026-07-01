@@ -3921,6 +3921,7 @@ function enhanceBreakingStrip(stories) {
     frameRate: 30,
     videoBitsPerSecond: 16000000,
     mobileVideoBitsPerSecond: 5000000,
+    mobileDurationSeconds: 60,
   });
   const BELOW_FOLD_SCROLL_STORY_CRITERIA = Object.freeze({
     maxCards: 12,
@@ -5868,6 +5869,9 @@ function enhanceBreakingStrip(stories) {
   function getBelowFoldLivePreviewScrollDuration(maxScroll, context) {
     if (isContinuousArticleScrollContext(context)) {
       const limits = getArticleScrollReaderLimits(context);
+      if (isMobileShareDevice() && limits.mobileDurationSeconds) {
+        return Math.round(limits.mobileDurationSeconds * 1000);
+      }
       const seconds = Math.max(
         limits.minDurationSeconds,
         Math.min(limits.maxDurationSeconds, maxScroll / limits.scrollPixelsPerSecond)
@@ -8134,15 +8138,20 @@ function enhanceBreakingStrip(stories) {
     const scrollPixelsPerSecond = isArticle
       ? articleLimits.scrollPixelsPerSecond
       : BELOW_FOLD_SCROLL_STORY_CRITERIA.scrollPixelsPerSecond;
-    const seconds = metrics.maxScroll > 0
-      ? Math.max(
+    const mobileContinuousDurationSeconds = continuousArticleScroll
+      && isMobileShareDevice()
+      && articleLimits?.mobileDurationSeconds;
+    const seconds = mobileContinuousDurationSeconds
+      ? mobileContinuousDurationSeconds / ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER
+      : (metrics.maxScroll > 0
+        ? Math.max(
         minDurationSeconds,
         Math.min(
           maxDurationSeconds,
           metrics.maxScroll / scrollPixelsPerSecond
         )
       )
-      : (isArticle ? minDurationSeconds : 6);
+        : (isArticle ? minDurationSeconds : 6));
     const duration = Math.round(seconds * (isArticle ? ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER : 1) * 1000);
     return {
       duration,
