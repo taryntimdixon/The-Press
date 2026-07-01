@@ -400,7 +400,13 @@ if (document.readyState === 'loading') {
   const IMAGE_LIGHTBOX_MAX_ZOOM = 6;
   const IMAGE_LIGHTBOX_ZOOM_STEP = 0.75;
   const IMAGE_LIGHTBOX_ZOOM_EPSILON = 0.01;
+  const ARTICLE_IMAGE_DOUBLE_TAP_DELAY = 300;
+  const ARTICLE_IMAGE_DOUBLE_TAP_DISTANCE = 46;
+  const ARTICLE_IMAGE_DOUBLE_TAP_ZOOM = 2.6;
   let activeLightbox = null;
+  let pendingArticleImageTap = null;
+  let suppressArticleImageClickUntil = 0;
+  const articleImagePointerStarts = new Map();
 
   function getImageLightboxSource(image) {
     if (!image) return '';
@@ -409,6 +415,37 @@ if (document.readyState === 'loading') {
 
   function clampImageLightboxValue(value, min, max) {
     return Math.min(Math.max(value, min), max);
+  }
+
+  function clearPendingArticleImageTap() {
+    if (pendingArticleImageTap?.timeoutId) window.clearTimeout(pendingArticleImageTap.timeoutId);
+    pendingArticleImageTap = null;
+  }
+
+  function getEnhancedArticleImageFromTarget(target) {
+    const image = target?.closest?.(ARTICLE_IMAGE_SELECTOR);
+    if (!image || image.dataset.pressImageZoom !== 'true') return null;
+    return image;
+  }
+
+  function getArticleImageTapTarget(image, event) {
+    const rect = image?.getBoundingClientRect?.();
+    if (!rect?.width || !rect?.height || typeof event?.clientX !== 'number' || typeof event?.clientY !== 'number') {
+      return null;
+    }
+
+    return {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      normalizedX: clampImageLightboxValue((event.clientX - rect.left) / rect.width, 0, 1),
+      normalizedY: clampImageLightboxValue((event.clientY - rect.top) / rect.height, 0, 1),
+    };
+  }
+
+  function isMatchingArticleImageDoubleTap(previousTap, image, target, now) {
+    if (!previousTap || previousTap.image !== image || !target) return false;
+    if (now - previousTap.at > ARTICLE_IMAGE_DOUBLE_TAP_DELAY) return false;
+    return Math.hypot(target.clientX - previousTap.x, target.clientY - previousTap.y) <= ARTICLE_IMAGE_DOUBLE_TAP_DISTANCE;
   }
 
   function getImageLightboxPanBounds(lightbox) {
@@ -476,6 +513,36 @@ if (document.readyState === 'loading') {
     updateImageLightboxTransform();
   }
 
+  function applyImageLightboxZoomTarget(lightbox, target, nextZoom) {
+    if (!lightbox || !target) return false;
+    const frameRect = lightbox.frame.getBoundingClientRect();
+    const renderedWidth = lightbox.image.offsetWidth;
+    const renderedHeight = lightbox.image.offsetHeight;
+    if (!frameRect.width || !frameRect.height || !renderedWidth || !renderedHeight) return false;
+
+    const zoom = clampImageLightboxValue(nextZoom, IMAGE_LIGHTBOX_MIN_ZOOM, getImageLightboxMaxZoom(lightbox));
+    const focalX = (clampImageLightboxValue(target.normalizedX, 0, 1) - 0.5) * renderedWidth;
+    const focalY = (clampImageLightboxValue(target.normalizedY, 0, 1) - 0.5) * renderedHeight;
+    const insetX = Math.min(90, frameRect.width * 0.18);
+    const insetY = Math.min(120, frameRect.height * 0.18);
+    const minX = frameRect.left + insetX;
+    const maxX = frameRect.right - insetX;
+    const minY = frameRect.top + insetY;
+    const maxY = frameRect.bottom - insetY;
+    const targetX = minX <= maxX
+      ? clampImageLightboxValue(target.clientX, minX, maxX)
+      : frameRect.left + frameRect.width / 2;
+    const targetY = minY <= maxY
+      ? clampImageLightboxValue(target.clientY, minY, maxY)
+      : frameRect.top + frameRect.height / 2;
+
+    lightbox.zoom = zoom;
+    lightbox.panX = targetX - (frameRect.left + frameRect.width / 2) - (focalX * zoom);
+    lightbox.panY = targetY - (frameRect.top + frameRect.height / 2) - (focalY * zoom);
+    updateImageLightboxTransform();
+    return true;
+  }
+
   function getImageLightboxGesturePoints(lightbox) {
     return Array.from(lightbox?.gesturePointers?.values?.() || []);
   }
@@ -538,6 +605,12 @@ if (document.readyState === 'loading') {
     if (!activeLightbox || event.pointerType === 'mouse') return;
     const lightbox = activeLightbox;
     if (lightbox.pinch || lightbox.didDrag || lightbox.gesturePointers?.size) return;
+    if (lightbox.zoom > IMAGE_LIGHTBOX_MIN_ZOOM && lightbox.tapToCloseWhenZoomed) {
+      event.preventDefault();
+      lightbox.suppressClickUntil = Date.now() + 420;
+      closeImageLightbox();
+      return;
+    }
     const now = Date.now();
     const previousTap = lightbox.lastTap;
     lightbox.lastTap = {
@@ -583,7 +656,7 @@ if (document.readyState === 'loading') {
     updateImageLightboxTransform();
   }
 
-  function openImageLightbox(source, image, opener, event) {
+  function openImageLightbox(source, image, opener, event, options = {}) {
     if (!source || !image) return;
     event?.preventDefault();
 
@@ -671,21 +744,24 @@ if (document.readyState === 'loading') {
       pinch: null,
       lastTap: null,
       suppressClickUntil: 0,
+      tapToCloseWhenZoomed: Boolean(options.tapToCloseWhenZoomed),
       historyPushed: false,
     };
-    if (
-      event
-      && typeof event.clientX === 'number'
-      && typeof event.clientY === 'number'
-      && window.matchMedia?.('(hover: none), (pointer: coarse)')?.matches
-    ) {
-      activeLightbox.lastTap = {
-        at: Date.now(),
-        x: event.clientX,
-        y: event.clientY,
-        fromOpen: true,
-      };
-    }
+    const openedLightbox = activeLightbox;
+    const syncLoadedImageLayout = () => {
+      if (activeLightbox !== openedLightbox) return;
+      if (
+        options.zoomTarget
+        && applyImageLightboxZoomTarget(
+          openedLightbox,
+          options.zoomTarget,
+          options.initialZoom || ARTICLE_IMAGE_DOUBLE_TAP_ZOOM,
+        )
+      ) {
+        return;
+      }
+      updateImageLightboxTransform();
+    };
 
     try {
       window.history.pushState({ ...(window.history.state || {}), pressImageLightbox: true }, '', window.location.href);
@@ -822,11 +898,16 @@ if (document.readyState === 'loading') {
       if (
         clickEvent.target === overlay ||
         (clickEvent.target === frame && activeLightbox?.zoom <= IMAGE_LIGHTBOX_MIN_ZOOM)
+        || (clickEvent.target === fullImage && activeLightbox?.zoom <= IMAGE_LIGHTBOX_MIN_ZOOM)
       ) {
         closeImageLightbox();
       }
     });
-    fullImage.addEventListener('load', () => updateImageLightboxTransform(), { once: true });
+    if (fullImage.complete) {
+      requestAnimationFrame(syncLoadedImageLayout);
+    } else {
+      fullImage.addEventListener('load', () => requestAnimationFrame(syncLoadedImageLayout), { once: true });
+    }
     window.addEventListener('resize', handleImageLightboxResize);
     updateImageLightboxTransform();
     overlay.focus({ preventScroll: true });
@@ -869,7 +950,72 @@ if (document.readyState === 'loading') {
     }
   }
 
+  document.addEventListener('pointerdown', (event) => {
+    if (activeLightbox || event.pointerType === 'mouse' || event.isPrimary === false) return;
+    const image = getEnhancedArticleImageFromTarget(event.target);
+    if (!image) return;
+    articleImagePointerStarts.set(event.pointerId, {
+      image,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }, { capture: true, passive: true });
+
+  document.addEventListener('pointercancel', (event) => {
+    articleImagePointerStarts.delete(event.pointerId);
+  }, { capture: true, passive: true });
+
+  document.addEventListener('pointerup', (event) => {
+    if (activeLightbox || event.pointerType === 'mouse' || event.isPrimary === false) return;
+    const image = getEnhancedArticleImageFromTarget(event.target);
+    const start = articleImagePointerStarts.get(event.pointerId);
+    articleImagePointerStarts.delete(event.pointerId);
+    if (!image || start?.image !== image) return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12) return;
+
+    const target = getArticleImageTapTarget(image, event);
+    if (!target) return;
+
+    const now = Date.now();
+    event.preventDefault();
+    event.stopPropagation();
+    suppressArticleImageClickUntil = now + 650;
+
+    if (isMatchingArticleImageDoubleTap(pendingArticleImageTap, image, target, now)) {
+      clearPendingArticleImageTap();
+      openImageLightbox(getImageLightboxSource(image), image, image, event, {
+        initialZoom: ARTICLE_IMAGE_DOUBLE_TAP_ZOOM,
+        zoomTarget: target,
+        tapToCloseWhenZoomed: true,
+      });
+      return;
+    }
+
+    clearPendingArticleImageTap();
+    pendingArticleImageTap = {
+      image,
+      at: now,
+      x: target.clientX,
+      y: target.clientY,
+      timeoutId: window.setTimeout(() => {
+        pendingArticleImageTap = null;
+        openImageLightbox(getImageLightboxSource(image), image, image, {
+          clientX: target.clientX,
+          clientY: target.clientY,
+          pointerType: event.pointerType,
+          preventDefault() {},
+        });
+      }, ARTICLE_IMAGE_DOUBLE_TAP_DELAY),
+    };
+  }, { capture: true });
+
   document.addEventListener('click', (event) => {
+    if (Date.now() < suppressArticleImageClickUntil && getEnhancedArticleImageFromTarget(event.target)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     const link = event.target.closest?.(IMAGE_LINK_SELECTOR);
     if (link) {
       openLinkedImageLightbox(link, event);
@@ -3774,7 +3920,7 @@ function enhanceBreakingStrip(stories) {
     scrollPixelsPerSecond: 269,
     frameRate: 30,
     videoBitsPerSecond: 16000000,
-    mobileVideoBitsPerSecond: 8000000,
+    mobileVideoBitsPerSecond: 5000000,
   });
   const BELOW_FOLD_SCROLL_STORY_CRITERIA = Object.freeze({
     maxCards: 12,
@@ -4369,6 +4515,10 @@ function enhanceBreakingStrip(stories) {
       await saveInstagramStoryCanvas(canvas, storyContext, status);
     };
     modal.querySelector('[data-instagram-story-native]').onclick = async () => {
+      if (isBelowFoldScrollStoryContext(storyContext) && modal._pressInstagramStoryAsset?.kind === 'video') {
+        await nativeShareInstagramStoryStudioAsset(modal, canvas, storyContext, status);
+        return;
+      }
       await ensureInstagramStoryReady(modal, status);
       if (isBelowFoldScrollStoryContext(storyContext)) {
         await nativeShareInstagramStoryStudioAsset(modal, canvas, storyContext, status);
@@ -4378,6 +4528,10 @@ function enhanceBreakingStrip(stories) {
     };
     modal.querySelector('[data-instagram-story-open]').onclick = async (event) => {
       event.preventDefault();
+      if (isBelowFoldScrollStoryContext(storyContext) && modal._pressInstagramStoryAsset?.kind === 'video') {
+        await openInstagramStoryWithStudioAsset(modal, canvas, storyContext, status);
+        return;
+      }
       await ensureInstagramStoryReady(modal, status);
       if (isBelowFoldScrollStoryContext(storyContext)) {
         await openInstagramStoryWithStudioAsset(modal, canvas, storyContext, status);
@@ -4753,8 +4907,13 @@ function enhanceBreakingStrip(stories) {
       setInstagramStoryAssetActionLabels(modal, asset?.kind || 'image', colorContext);
       setInstagramStoryActionsDisabled(modal, false);
       setInstagramStoryStyleControlsDisabled(modal, false);
+      const mobileContinuousVideo = asset?.kind === 'video'
+        && isContinuousArticleScrollContext(colorContext)
+        && isMobileShareDevice();
       setInstagramStoryStatus(status, asset?.kind === 'video'
-        ? 'Scroll video ready. Tap Save video.'
+        ? (mobileContinuousVideo
+          ? `Scroll video ready${asset.blob?.size ? ` (${formatShareFileSize(asset.blob.size)})` : ''}. Tap Save Video to Photos.`
+          : 'Scroll video ready. Tap Save video.')
         : 'Video unavailable here. Story image ready.');
       return true;
     }).catch(async (error) => {
@@ -9015,7 +9174,9 @@ function enhanceBreakingStrip(stories) {
             requirePhotosCompatibleVideo: true,
             fileOnly: true,
             successMessage: 'Choose Save Video to save it to Photos.',
-            cancelMessage: 'Save Video did not open. Tap Share / Save Video and choose Save Video.',
+            cancelMessage: 'Save sheet closed before the video was saved.',
+            blockedMessage: 'The phone blocked Save Video. Open this page in Safari and tap Save Video to Photos again.',
+            unsupportedMessage: 'This browser cannot send this video to Photos. Open this page in Safari and tap Save Video to Photos again.',
           });
           if (shared) return true;
           return false;
@@ -9055,8 +9216,14 @@ function enhanceBreakingStrip(stories) {
           ? 'Choose Save Video to save it to Photos.'
           : `Share sheet opened. Choose ${platform.label} if it appears.`,
         cancelMessage: saveToPhotosMode
-          ? 'Save Video did not open. The phone may be blocking this file.'
+          ? 'Save sheet closed before the video was saved.'
           : 'Video share did not open. Starting download.',
+        blockedMessage: saveToPhotosMode
+          ? 'The phone blocked Save Video. Open this page in Safari and tap Share / Save Video again.'
+          : undefined,
+        unsupportedMessage: saveToPhotosMode
+          ? 'This browser cannot send this video to Photos. Open this page in Safari and tap Share / Save Video again.'
+          : undefined,
       });
       if (shared) return true;
       if (saveToPhotosMode) return false;
@@ -9183,12 +9350,12 @@ function enhanceBreakingStrip(stories) {
   async function shareInstagramStoryBlob(blob, filename, context, status, options = {}) {
     if (!blob || typeof File === 'undefined' || !navigator.share) return false;
     if (!options.allowLargeVideo && shouldAvoidMobileScrollVideoFileShare(blob, context)) {
-      setInstagramStoryStatus(status, options.cancelMessage || 'Video is large, so starting a safer download.');
+      setInstagramStoryStatus(status, options.largeVideoMessage || `Video is ${formatShareFileSize(blob.size)}, which is too large for reliable Photos saving here. Rebuild the video and try Save Video again.`);
       return false;
     }
     const fileType = getInstagramStoryVideoFileMimeType(blob.type || filename || '');
     if (options.requirePhotosCompatibleVideo && !/mp4/i.test(fileType)) {
-      setInstagramStoryStatus(status, options.cancelMessage || 'Photos save needs an MP4 video. Starting download.');
+      setInstagramStoryStatus(status, options.incompatibleVideoMessage || `Photos needs an MP4 video, but this browser made ${fileType || 'a different format'}. Open in Safari and try again.`);
       return false;
     }
     let file;
@@ -9206,14 +9373,20 @@ function enhanceBreakingStrip(stories) {
     }
 
     const canAskForFileShare = !navigator.canShare || navigator.canShare({ files: [file] });
-    if (!canAskForFileShare) return false;
+    if (!canAskForFileShare) {
+      setInstagramStoryStatus(status, options.unsupportedMessage || `This browser cannot send this ${formatShareFileSize(blob.size)} ${fileType.replace(/^video\//, '').toUpperCase()} video to Photos. Open the page in Safari and try Save Video again.`);
+      return false;
+    }
 
     try {
       await navigator.share(shareData);
       setInstagramStoryStatus(status, options.successMessage || 'Share sheet opened. Choose Instagram Stories if it appears.');
       return true;
-    } catch (_) {
-      setInstagramStoryStatus(status, options.cancelMessage || 'Video share did not open. Starting download.');
+    } catch (error) {
+      const message = error?.name === 'AbortError'
+        ? (options.cancelMessage || 'Save sheet closed before the video was saved.')
+        : (options.blockedMessage || options.cancelMessage || 'The phone blocked the video save sheet. Try opening this page in Safari and tap Save Video again.');
+      setInstagramStoryStatus(status, message);
       return false;
     }
   }
@@ -9222,6 +9395,13 @@ function enhanceBreakingStrip(stories) {
     return isMobileShareDevice()
       && isContinuousArticleScrollContext(context)
       && (blob?.size || 0) > ARTICLE_SCROLL_STORY_MOBILE_SHARE_LIMIT_BYTES;
+  }
+
+  function formatShareFileSize(bytes) {
+    const value = Number(bytes) || 0;
+    if (value >= 1024 * 1024) return `${Math.round(value / (1024 * 1024))} MB`;
+    if (value >= 1024) return `${Math.round(value / 1024)} KB`;
+    return `${value} bytes`;
   }
 
   async function saveInstagramStoryBlobWithPicker(asset, status) {
