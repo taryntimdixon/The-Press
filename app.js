@@ -9003,8 +9003,17 @@ function enhanceBreakingStrip(stories) {
     const asset = modal?._pressInstagramStoryAsset;
     if (asset?.kind === 'video' && asset.blob) {
       if (isContinuousArticleScrollContext(context)) {
+        if (isMobileShareDevice()) {
+          setInstagramStoryStatus(status, 'Opening Save Video options...');
+          const shared = await shareInstagramStoryBlob(asset.blob, asset.filename, context, status, {
+            allowLargeVideo: true,
+            successMessage: 'Choose Save Video to save it to Photos.',
+            cancelMessage: 'Save sheet closed. Starting a device download.',
+          });
+          if (shared) return true;
+        }
         return downloadInstagramStoryBlobAsset(asset, status, isMobileShareDevice()
-          ? 'Video download started. Open it from Downloads or Files.'
+          ? 'Device download started. For Photos, tap Share video and choose Save Video.'
           : 'Video download started.');
       }
       if (isMobileShareDevice()) {
@@ -9030,8 +9039,12 @@ function enhanceBreakingStrip(stories) {
     const asset = modal?._pressInstagramStoryAsset;
     if (asset?.kind === 'video' && asset.blob) {
       const platform = getScrollStoryPlatformMeta(context.scrollStoryPlatform);
+      const saveToPhotosMode = isContinuousArticleScrollContext(context) && isMobileShareDevice();
       const shared = await shareInstagramStoryBlob(asset.blob, asset.filename, context, status, {
-        successMessage: `Share sheet opened. Choose ${platform.label} if it appears.`,
+        allowLargeVideo: saveToPhotosMode,
+        successMessage: saveToPhotosMode
+          ? 'Choose Save Video to save it to Photos.'
+          : `Share sheet opened. Choose ${platform.label} if it appears.`,
         cancelMessage: 'Video share did not open. Starting download.',
       });
       if (shared) return true;
@@ -9157,7 +9170,7 @@ function enhanceBreakingStrip(stories) {
 
   async function shareInstagramStoryBlob(blob, filename, context, status, options = {}) {
     if (!blob || typeof File === 'undefined' || !navigator.share) return false;
-    if (shouldAvoidMobileScrollVideoFileShare(blob, context)) {
+    if (!options.allowLargeVideo && shouldAvoidMobileScrollVideoFileShare(blob, context)) {
       setInstagramStoryStatus(status, options.cancelMessage || 'Video is large, so starting a safer download.');
       return false;
     }
