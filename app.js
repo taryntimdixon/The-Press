@@ -3730,8 +3730,9 @@ function enhanceBreakingStrip(stories) {
   ];
   const HOMEPAGE_SOCIAL_SHARE_STORAGE_PREFIX = 'press-homepage-social-share';
   const BELOW_FOLD_SCROLL_STORY_ASSET_CACHE = new Map();
-  const ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER = 1778 / 1125;
+  const ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER = (1778 / 1125) / 1.05;
   const ARTICLE_SCROLL_STORY_PAGE_FILL_SCALE = 1.08;
+  const ARTICLE_SCROLL_STORY_MOBILE_SHARE_LIMIT_BYTES = 90 * 1024 * 1024;
   const ARTICLE_SCROLL_READER_LIMITS = Object.freeze({
     maxSections: 14,
     maxFigureSections: 7,
@@ -3772,7 +3773,7 @@ function enhanceBreakingStrip(stories) {
     maxDurationSeconds: 127,
     scrollPixelsPerSecond: 269,
     frameRate: 30,
-    videoBitsPerSecond: 12000000,
+    videoBitsPerSecond: 9000000,
   });
   const BELOW_FOLD_SCROLL_STORY_CRITERIA = Object.freeze({
     maxCards: 12,
@@ -4847,6 +4848,7 @@ function enhanceBreakingStrip(stories) {
 
     const mimeType = recorder.mimeType || videoType || 'video/webm';
     const blob = new Blob(chunks, { type: mimeType });
+    chunks.length = 0;
     if (!blob.size) {
       hideBelowFoldLiveScrollPreview(modal);
       canvas.hidden = false;
@@ -8971,6 +8973,11 @@ function enhanceBreakingStrip(stories) {
   async function saveInstagramStoryStudioAsset(modal, canvas, context, status) {
     const asset = modal?._pressInstagramStoryAsset;
     if (asset?.kind === 'video' && asset.blob) {
+      if (isContinuousArticleScrollContext(context)) {
+        return downloadInstagramStoryBlobAsset(asset, status, isMobileShareDevice()
+          ? 'Video download started. Open it from Downloads or Files.'
+          : 'Video download started.');
+      }
       if (isMobileShareDevice()) {
         setInstagramStoryStatus(status, 'Opening save options...');
         const shared = await shareInstagramStoryBlob(asset.blob, asset.filename, context, status, {
@@ -9121,8 +9128,19 @@ function enhanceBreakingStrip(stories) {
 
   async function shareInstagramStoryBlob(blob, filename, context, status, options = {}) {
     if (!blob || typeof File === 'undefined' || !navigator.share) return false;
+    if (shouldAvoidMobileScrollVideoFileShare(blob, context)) {
+      setInstagramStoryStatus(status, options.cancelMessage || 'Video is large, so starting a safer download.');
+      return false;
+    }
     const fileType = getInstagramStoryVideoFileMimeType(blob.type || filename || '');
-    const file = new File([blob], filename || `the-press-instagram-story${getInstagramStoryVideoFileExtension(fileType)}`, { type: fileType });
+    let file;
+    try {
+      file = new File([blob], filename || `the-press-instagram-story${getInstagramStoryVideoFileExtension(fileType)}`, { type: fileType });
+    } catch (error) {
+      console.warn('Video file share preparation failed.', error);
+      setInstagramStoryStatus(status, options.cancelMessage || 'Video share could not prepare. Starting download.');
+      return false;
+    }
     const shareData = {
       files: [file],
       title: context.title,
@@ -9140,6 +9158,12 @@ function enhanceBreakingStrip(stories) {
       setInstagramStoryStatus(status, options.cancelMessage || 'Video share did not open. Starting download.');
       return false;
     }
+  }
+
+  function shouldAvoidMobileScrollVideoFileShare(blob, context) {
+    return isMobileShareDevice()
+      && isContinuousArticleScrollContext(context)
+      && (blob?.size || 0) > ARTICLE_SCROLL_STORY_MOBILE_SHARE_LIMIT_BYTES;
   }
 
   async function saveInstagramStoryBlobWithPicker(asset, status) {
@@ -9170,13 +9194,19 @@ function enhanceBreakingStrip(stories) {
 
   function downloadInstagramStoryBlobAsset(asset, status, message) {
     if (!asset?.blob) return false;
-    const url = asset.url || URL.createObjectURL(asset.blob);
-    const started = triggerTemporaryDownload(url, asset.filename || 'the-press-instagram-story.webm');
-    if (!asset.url) window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-    setInstagramStoryStatus(status, started
-      ? (message || 'Video download started.')
-      : 'Save was blocked. Try Share video.');
-    return started;
+    try {
+      const url = asset.url || URL.createObjectURL(asset.blob);
+      const started = triggerTemporaryDownload(url, asset.filename || 'the-press-instagram-story.webm');
+      if (!asset.url) window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setInstagramStoryStatus(status, started
+        ? (message || 'Video download started.')
+        : 'Save was blocked. Try Share video.');
+      return started;
+    } catch (error) {
+      console.warn('Video download failed.', error);
+      setInstagramStoryStatus(status, 'Save was blocked. Try Share video.');
+      return false;
+    }
   }
 
   function getSupportedInstagramStoryVideoType() {
@@ -9298,7 +9328,6 @@ function enhanceBreakingStrip(stories) {
     link.href = url;
     link.download = filename;
     link.rel = 'noopener';
-    link.target = '_blank';
     link.style.display = 'none';
     document.body.appendChild(link);
     let started = false;
