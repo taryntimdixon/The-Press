@@ -4826,7 +4826,7 @@ function enhanceBreakingStrip(stories) {
     });
 
     if (continuousArticleScroll) updateBelowFoldLiveScrollPreviewProgress(modal, 0);
-    recorder.start(continuousArticleScroll ? 500 : 1000);
+    recorder.start(1000);
     drawBelowFoldScrollFrame(ctx, strip, 0);
     streamVideoTrack?.requestFrame?.();
     await waitForNextScrollPreviewFrame();
@@ -4926,7 +4926,7 @@ function enhanceBreakingStrip(stories) {
   }
 
   function isUsableBelowFoldDomScrollStrip(strip) {
-    return strip?.kind === 'dom' && Boolean(strip.canvas || strip.chunks?.length);
+    return strip?.kind === 'dom' && Boolean(strip.canvas || strip.chunks?.length || strip.pages?.length);
   }
 
   async function buildArticleCanvasScrollStrip(context, callbacks = {}) {
@@ -4989,30 +4989,22 @@ function enhanceBreakingStrip(stories) {
     }))).filter(Boolean);
     if (!pages.length) return null;
 
-    const pageLayouts = pages.map((page) => ({
-      ...page,
-      height: Math.max(1, Math.round(stripWidth * (page.naturalHeight / page.naturalWidth))),
-    }));
-    const totalHeight = Math.ceil(pageLayouts.reduce((sum, page) => sum + page.height, 0));
-    const chunkHeight = Math.max(2600, Math.min(3600, Math.round(stripWidth * 3.75)));
-    const chunks = [];
-
-    for (let y = 0; y < totalHeight; y += chunkHeight) {
-      const canvas = document.createElement('canvas');
-      canvas.width = stripWidth;
-      canvas.height = Math.min(chunkHeight, totalHeight - y);
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = background;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      chunks.push({
-        canvas,
-        y,
-        height: canvas.height,
-      });
-    }
+    let cursorY = 0;
+    const pageLayouts = pages.map((page) => {
+      const height = Math.max(1, Math.round(stripWidth * (page.naturalHeight / page.naturalWidth)));
+      const layout = {
+        ...page,
+        y: cursorY,
+        height,
+      };
+      cursorY += height;
+      return layout;
+    });
+    const totalHeight = Math.ceil(cursorY);
 
     const strip = {
-      chunks,
+      chunks: [],
+      pages: pageLayouts,
       height: totalHeight,
       width: stripWidth,
       kind: 'dom',
@@ -5023,25 +5015,7 @@ function enhanceBreakingStrip(stories) {
         paper: background,
       },
     };
-    let notifiedFirstFrame = false;
-    let cursorY = 0;
-
-    pageLayouts.forEach((page) => {
-      drawContinuousArticleImageAcrossChunks(chunks, page.image, {
-        sourceWidth: page.naturalWidth,
-        sourceHeight: page.naturalHeight,
-        destTop: cursorY,
-        destWidth: stripWidth,
-        destHeight: page.height,
-      });
-      cursorY += page.height;
-      if (!notifiedFirstFrame && typeof callbacks.onFirstFrame === 'function') {
-        notifiedFirstFrame = true;
-        callbacks.onFirstFrame(strip);
-      }
-    });
-
-    if (!notifiedFirstFrame && typeof callbacks.onFirstFrame === 'function') callbacks.onFirstFrame(strip);
+    if (typeof callbacks.onFirstFrame === 'function') callbacks.onFirstFrame(strip);
     return strip;
   }
 
@@ -7852,6 +7826,17 @@ function enhanceBreakingStrip(stories) {
     const stripWidth = options.stripWidth || strip.width || strip.canvas?.width || 390;
 
     if (!sourceHeight) return;
+    if (Array.isArray(strip.pages) && strip.pages.length) {
+      drawContinuousArticlePageLayoutsSlice(ctx, strip.pages, {
+        sourceY,
+        sourceHeight,
+        destX,
+        destY,
+        destWidth,
+        scale,
+      });
+      return;
+    }
     if (!Array.isArray(strip.chunks) || !strip.chunks.length) {
       ctx.drawImage(
         strip.canvas,
@@ -7886,6 +7871,51 @@ function enhanceBreakingStrip(stories) {
         sliceY,
         stripWidth,
         sliceHeight,
+        destX,
+        destY + ((overlapTop - sourceY) * scale),
+        destWidth,
+        sliceHeight * scale
+      );
+    }
+  }
+
+  function drawContinuousArticlePageLayoutsSlice(ctx, pages, options) {
+    const sourceY = options.sourceY || 0;
+    const sourceHeight = Math.max(0, options.sourceHeight || 0);
+    const sourceEnd = sourceY + sourceHeight;
+    const destX = options.destX || 0;
+    const destY = options.destY || 0;
+    const destWidth = options.destWidth || 0;
+    const scale = options.scale || 1;
+    if (!sourceHeight || !destWidth) return;
+
+    for (let index = 0; index < pages.length; index += 1) {
+      const page = pages[index];
+      const pageY = page.y || 0;
+      const pageHeight = page.height || 0;
+      if (pageY > sourceEnd) break;
+      if (!page?.image || !pageHeight || pageY + pageHeight < sourceY) continue;
+
+      const overlapTop = Math.max(sourceY, pageY);
+      const overlapBottom = Math.min(sourceEnd, pageY + pageHeight);
+      if (overlapBottom <= overlapTop) continue;
+
+      const sliceY = overlapTop - pageY;
+      const sliceHeight = overlapBottom - overlapTop;
+      const naturalWidth = page.naturalWidth || page.image.naturalWidth || page.image.width || 0;
+      const naturalHeight = page.naturalHeight || page.image.naturalHeight || page.image.height || 0;
+      if (!naturalWidth || !naturalHeight) continue;
+
+      const sourceSliceY = (sliceY / pageHeight) * naturalHeight;
+      const sourceSliceHeight = Math.min(naturalHeight - sourceSliceY, (sliceHeight / pageHeight) * naturalHeight);
+      if (sourceSliceHeight <= 0) continue;
+
+      ctx.drawImage(
+        page.image,
+        0,
+        sourceSliceY,
+        naturalWidth,
+        sourceSliceHeight,
         destX,
         destY + ((overlapTop - sourceY) * scale),
         destWidth,
