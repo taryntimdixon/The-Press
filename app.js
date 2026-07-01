@@ -3921,7 +3921,8 @@ function enhanceBreakingStrip(stories) {
     frameRate: 30,
     videoBitsPerSecond: 16000000,
     mobileVideoBitsPerSecond: 5000000,
-    mobileDurationSeconds: 60,
+    mobileDurationSeconds: 30,
+    mobileMaxScrollProgress: 0.2,
   });
   const BELOW_FOLD_SCROLL_STORY_CRITERIA = Object.freeze({
     maxCards: 12,
@@ -8141,6 +8142,9 @@ function enhanceBreakingStrip(stories) {
     const mobileContinuousDurationSeconds = continuousArticleScroll
       && isMobileShareDevice()
       && articleLimits?.mobileDurationSeconds;
+    const maxProgress = mobileContinuousDurationSeconds
+      ? Math.max(0.05, Math.min(1, articleLimits?.mobileMaxScrollProgress || 1))
+      : 1;
     const seconds = mobileContinuousDurationSeconds
       ? mobileContinuousDurationSeconds / ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER
       : (metrics.maxScroll > 0
@@ -8160,6 +8164,7 @@ function enhanceBreakingStrip(stories) {
       returnDuration: 0,
       holdEnd: continuousArticleScroll ? 0 : 260,
       frameRate: isArticle ? articleLimits.frameRate : BELOW_FOLD_SCROLL_STORY_CRITERIA.frameRate,
+      maxProgress,
       smoothFramePacing: continuousArticleScroll,
     };
   }
@@ -8206,6 +8211,7 @@ function enhanceBreakingStrip(stories) {
     const frameRate = Math.max(2, Math.min(60, options.frameRate || 60));
     const frameDelay = 1000 / frameRate;
     const startedAt = performance.now();
+    const maxProgress = Math.max(0, Math.min(1, Number(options.maxProgress) || 1));
 
     if (options.smoothFramePacing) {
       return animateBelowFoldScrollStripFixedFrames(ctx, strip, {
@@ -8232,8 +8238,9 @@ function enhanceBreakingStrip(stories) {
           holdBottom,
           returnDuration,
         });
-        drawBelowFoldScrollFrame(ctx, strip, progress);
-        options.onFrame?.(progress);
+        const frameProgress = progress * maxProgress;
+        drawBelowFoldScrollFrame(ctx, strip, frameProgress);
+        options.onFrame?.(frameProgress);
         if (elapsed >= total) break;
 
         nextFrameAt += frameDelay;
@@ -8242,7 +8249,7 @@ function enhanceBreakingStrip(stories) {
         }
         await waitForBelowFoldAnimationDelay(Math.max(0, nextFrameAt - performance.now()));
       }
-      const finalProgress = returnDuration ? 0 : 1;
+      const finalProgress = returnDuration ? 0 : maxProgress;
       drawBelowFoldScrollFrame(ctx, strip, finalProgress);
       options.onFrame?.(finalProgress);
     })();
@@ -8258,6 +8265,7 @@ function enhanceBreakingStrip(stories) {
     const frameDelay = options.frameDelay || (1000 / Math.max(2, Math.min(60, options.frameRate || 60)));
     const startedAt = performance.now();
     const totalFrames = Math.max(1, Math.ceil(total / frameDelay));
+    const maxProgress = Math.max(0, Math.min(1, Number(options.maxProgress) || 1));
 
     return (async () => {
       for (let frameIndex = 0; frameIndex <= totalFrames; frameIndex += 1) {
@@ -8268,14 +8276,15 @@ function enhanceBreakingStrip(stories) {
           holdBottom,
           returnDuration,
         });
-        drawBelowFoldScrollFrame(ctx, strip, progress);
-        options.onFrame?.(progress);
+        const frameProgress = progress * maxProgress;
+        drawBelowFoldScrollFrame(ctx, strip, frameProgress);
+        options.onFrame?.(frameProgress);
         if (elapsed >= total || frameIndex >= totalFrames) break;
 
         const targetFrameAt = startedAt + ((frameIndex + 1) * frameDelay);
         await waitForBelowFoldAnimationDelay(Math.max(0, targetFrameAt - performance.now()));
       }
-      const finalProgress = returnDuration ? 0 : 1;
+      const finalProgress = returnDuration ? 0 : maxProgress;
       drawBelowFoldScrollFrame(ctx, strip, finalProgress);
       options.onFrame?.(finalProgress);
     })();
