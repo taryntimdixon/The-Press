@@ -3877,7 +3877,7 @@ function enhanceBreakingStrip(stories) {
   const HOMEPAGE_SOCIAL_SHARE_STORAGE_PREFIX = 'press-homepage-social-share';
   const BELOW_FOLD_SCROLL_STORY_ASSET_CACHE = new Map();
   const ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER = (1778 / 1125) / (1.05 * 1.10);
-  const ARTICLE_SCROLL_STORY_PAGE_FILL_SCALE = 1.08;
+  const ARTICLE_SCROLL_STORY_PAGE_FILL_SCALE = 1;
   const ARTICLE_SCROLL_STORY_MOBILE_SHARE_LIMIT_BYTES = 180 * 1024 * 1024;
   const ARTICLE_SCROLL_READER_LIMITS = Object.freeze({
     maxSections: 14,
@@ -3920,7 +3920,8 @@ function enhanceBreakingStrip(stories) {
     scrollPixelsPerSecond: 269,
     frameRate: 30,
     videoBitsPerSecond: 16000000,
-    mobileVideoBitsPerSecond: 5000000,
+    mobileVideoBitsPerSecond: 6000000,
+    mobileRecorderTimesliceMs: 5000,
     mobileDurationSeconds: 30,
     mobileMaxScrollProgress: 0.2,
   });
@@ -4989,7 +4990,7 @@ function enhanceBreakingStrip(stories) {
     });
 
     if (continuousArticleScroll) updateBelowFoldLiveScrollPreviewProgress(modal, 0);
-    recorder.start(1000);
+    recorder.start(getBelowFoldScrollRecorderTimeslice(context));
     drawBelowFoldScrollFrame(ctx, strip, 0);
     streamVideoTrack?.requestFrame?.();
     await waitForNextScrollPreviewFrame();
@@ -5132,7 +5133,7 @@ function enhanceBreakingStrip(stories) {
     const limits = getArticleScrollReaderLimits(context);
     const scale = Math.max(1, limits.stripScale || ARTICLE_CONTINUOUS_SCROLL_READER_LIMITS.stripScale || 2);
     const viewportWidth = profile.viewportWidth || 430;
-    const stripWidth = Math.round(viewportWidth * scale);
+    const stripWidth = Math.round(profile.canvasWidth || (viewportWidth * scale));
     const background = '#ece1cf';
     const pages = (await Promise.all(pageNodes.map(async (node, index) => {
       const src = normalizeShareAssetUrl(node.currentSrc || node.getAttribute('src') || '');
@@ -8176,6 +8177,15 @@ function enhanceBreakingStrip(stories) {
       return limits.mobileVideoBitsPerSecond || limits.videoBitsPerSecond;
     }
     return limits.videoBitsPerSecond;
+  }
+
+  function getBelowFoldScrollRecorderTimeslice(context) {
+    if (context?.type !== 'article') return 1000;
+    const limits = getArticleScrollReaderLimits(context);
+    if (isContinuousArticleScrollContext(context) && isMobileShareDevice()) {
+      return limits.mobileRecorderTimesliceMs || 1000;
+    }
+    return 1000;
   }
 
   function getArticleScrollReaderLimits(context) {
