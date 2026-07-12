@@ -20,10 +20,12 @@ Aim for forceful, original prose. Do not imitate specific historical or living w
 ## Illustrated Feature Pacing Standard
 - Build illustration-led features from the available art, source needs, and page rhythm instead of forcing a preset page count.
 - Use dense factual copy. Every sentence must deliver a fact, definition, source-backed connection, number, public-record detail, historical detail, or concrete reader-useful explanation.
+- Place inline source notes at the end of the sentence they support. Do not save all inline citations for the end of a multi-sentence paragraph.
 - Remove sentences that only praise the art, announce the mood, defend why an image exists, or repeat a point already made.
 - Expand acronyms on first use, including agency names such as Metropolitan Transportation Authority (MTA), New York City Department of Transportation (NYC DOT), Fire Department of the City of New York (FDNY), and New York Police Department (NYPD).
 - Match section backgrounds to the palette of the illustration group, but leave image files visually unfiltered. Do not use CSS filters, blend modes, tint overlays, or opacity tricks on images that are meant to be read.
 - Size information-rich illustrations large enough for labels, field marks, diagrams, and annotations to be legible on desktop and mobile.
+- Give dense or information-rich illustrations an intentional enlargement path, such as click/tap/keyboard access to a full-size lightbox, without automatic hover/focus enlargement, column-spacing changes, or stretched cards.
 
 ## Feature Layout Architecture
 - Do not place unequal left-column and right-column modules into shared CSS grid rows when the modules should move independently.
