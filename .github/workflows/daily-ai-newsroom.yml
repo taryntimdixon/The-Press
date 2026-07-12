@@ -137,7 +137,7 @@ jobs:
       - name: Create review PR
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: ai-preserve-${{ github.run_number }}
+          branch: automation/daily-ai-newsroom
           delete-branch: true
           title: "The Press daily issue — 15 sourced stories with GPT Image 2 thumbnails"
           body: |

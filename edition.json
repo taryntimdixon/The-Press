@@ -1,5 +1,22 @@
 [
   {
+    "title": "A Love Letter to New York",
+    "url": "culture-a-love-letter-to-new-york.html",
+    "section": "Culture",
+    "type": "Illustrated Feature",
+    "author": "Nia Calder",
+    "publishedLabel": "June 15, 2026 • 9:00 a.m. EDT",
+    "updatedLabel": "June 15, 2026 • 9:00 a.m. EDT",
+    "publishedIso": "2026-06-15T09:00:00-04:00",
+    "updatedIso": "2026-06-15T09:00:00-04:00",
+    "wordCount": "In development",
+    "readTime": "In development",
+    "dek": "A newspaper-style illustrated edition of New York City, built from full-page visual stories about the places, teams, institutions, and civic systems that make the city feel alive.",
+    "image": "assets/ny-love-letter/a-love-letter-to-new-york-thumbnail.jpg",
+    "imageAlt": "Illustrated New York City collage with the Manhattan skyline, Brooklyn Bridge, subway entrance, yellow taxi, harbor, and map details on warm newsprint",
+    "imageCredit": "The Press illustrated newspaper edition"
+  },
+  {
     "title": "Cartels Beneath the State",
     "url": "world-cartels-beneath-the-state.html",
     "section": "World",
@@ -12,7 +29,7 @@
     "wordCount": "15,000 words",
     "readTime": "75 min read",
     "dek": "A source-forward investigation into how modern cartels recruit labor, tax local economies, launder money, exploit global demand, corrupt institutions, and govern by fear beneath the state.",
-    "image": "assets/press-display/article-thumbnails/2026-06-09-cartels-beneath-state-floating-head.png",
+    "image": "assets/press-display/article-thumbnails/2026-06-09-cartels-beneath-state-floating-head.jpg",
     "imageAlt": "Glossy stylized floating illustrated head of a mustached man against a bright blue sky with soft white clouds",
     "imageCredit": ""
   },
@@ -80,7 +97,7 @@
     "wordCount": "3,024 words",
     "readTime": "16 min read",
     "dek": "AI data centers have moved from cloud strategy into utility-bill math. A new Press analysis of EIA electricity data tracks the fight over megawatts, water, local consent, and who pays when private compute demand lands on public grids.",
-    "image": "assets/data-center-grid/data-center-cooling-campus-thumbnail.png",
+    "image": "assets/data-center-grid/data-center-cooling-campus-thumbnail.jpg",
     "imageAlt": "Data-center cooling towers and pipes beside a desert water basin, with nearby neighborhoods and mountains in the distance",
     "imageCredit": "The Press photorealistic editorial visual"
   },

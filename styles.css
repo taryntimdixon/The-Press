@@ -9738,7 +9738,7 @@ body.page-article:has(.press-social-feature)::before{
   padding:6.25rem .82rem .82rem;
   background:
     linear-gradient(180deg, rgba(12,18,30,.08) 0%, rgba(12,18,30,.18) 42%, rgba(12,18,30,.82) 100%),
-    var(--rail-photo) center / cover no-repeat;
+    var(--rail-photo-active, none) center / cover no-repeat;
   border:1px solid rgba(255,255,255,.28);
   color:#fff;
 }

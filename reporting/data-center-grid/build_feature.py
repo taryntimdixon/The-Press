@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+DEFERRED_IMAGE_PLACEHOLDER = "data:image/gif;base64,R0lGODlhAQABAAAAACw="
 REPORTING_DIR = ROOT / "reporting" / "data-center-grid"
 BODY_PATH = ROOT / "content" / "bodies" / "technology-the-data-center-is-the-new-utility-bill.html"
 ASIDE_PATH = ROOT / "content" / "asides" / "technology-the-data-center-is-the-new-utility-bill.html"
@@ -168,7 +169,7 @@ def art_poster(slug: str) -> str:
     size_attrs = f' width="{width}" height="{height}"' if width and height else ""
     return f"""
 <figure class="data-center-grid-art-poster data-center-grid-art-poster--{h(slug)}" style="--poster-position:{h(data['position'])}">
-  <img src="{h(data['src'])}" alt="{h(data['alt'])}" loading="lazy" decoding="async"{size_attrs} />
+  <img src="{DEFERRED_IMAGE_PLACEHOLDER}" data-press-lazy-src="{h(data['src'])}" alt="{h(data['alt'])}" loading="lazy" decoding="async"{size_attrs} />
   <figcaption>{h(data['caption'])}{ref(*data['sources'])}</figcaption>
 </figure>
 """.strip()
@@ -192,7 +193,7 @@ def card(source: dict) -> str:
     photo_html = (
         f"""
   <figure class="data-center-grid-rail-photo">
-    <img src="{h(image_src)}" alt="{h(image_alt)}" loading="lazy" decoding="async" width="800" height="520" />
+    <img src="{DEFERRED_IMAGE_PLACEHOLDER}" data-press-lazy-src="{h(image_src)}" alt="{h(image_alt)}" loading="lazy" decoding="async" width="800" height="520" />
   </figure>""".rstrip()
         if image_src
         else ""
@@ -295,7 +296,7 @@ def annotated_figure(path: str, alt: str, caption: str, labels: list[tuple[str, 
     return f"""
 <figure class="data-center-grid-figure data-center-grid-figure--annotated">
   <div class="data-center-grid-figure__media">
-    <img src="{h(path)}" alt="{h(alt)}" loading="lazy" decoding="async" />
+    <img src="{DEFERRED_IMAGE_PLACEHOLDER}" data-press-lazy-src="{h(path)}" alt="{h(alt)}" loading="lazy" decoding="async" />
   </div>
   <figcaption>{caption}</figcaption>
 </figure>
@@ -526,19 +527,19 @@ sections = [
 def build_body() -> str:
     rows = []
     source_chunks = [SOURCES[i : i + 10] for i in range(0, len(SOURCES), 10)]
-    gallery = """
+    gallery = f"""
 <details class="article-rail-gallery article-rail-gallery--top data-center-grid-gallery" id="article-gallery" data-gallery-open-mode="manual">
   <summary>Article Gallery</summary>
   <div class="article-rail-gallery__grid">
-    <a class="article-rail-gallery__card" href="#load-visible"><img src="assets/data-center-grid/data-center-cooling-campus-thumbnail.png" alt="Data-center cooling yard beside a desert retention pond and nearby neighborhoods" loading="lazy" decoding="async" /></a>
-    <a class="article-rail-gallery__card" href="#discipline"><img src="assets/data-center-grid/grid-ledger-collage.png" alt="Grid ledger collage with meter, substation drawings and server racks" loading="lazy" decoding="async" /></a>
-    <a class="article-rail-gallery__card" href="#water"><img src="assets/data-center-grid/cooling-water-yard.png" alt="Data-center cooling equipment, pipes and retention basin" loading="lazy" decoding="async" /></a>
-    <a class="article-rail-gallery__card" href="#virginia"><img src="assets/data-center-grid/ratepayer-meter-still-life.png" alt="Household electric meter and utility bill with data-center reflection" loading="lazy" decoding="async" /></a>
+    <a class="article-rail-gallery__card" href="#load-visible"><img src="{DEFERRED_IMAGE_PLACEHOLDER}" data-press-lazy-src="assets/data-center-grid/data-center-cooling-campus-thumbnail.jpg" alt="Data-center cooling yard beside a desert retention pond and nearby neighborhoods" loading="lazy" decoding="async" /></a>
+    <a class="article-rail-gallery__card" href="#discipline"><img src="{DEFERRED_IMAGE_PLACEHOLDER}" data-press-lazy-src="assets/data-center-grid/grid-ledger-collage.png" alt="Grid ledger collage with meter, substation drawings and server racks" loading="lazy" decoding="async" /></a>
+    <a class="article-rail-gallery__card" href="#water"><img src="{DEFERRED_IMAGE_PLACEHOLDER}" data-press-lazy-src="assets/data-center-grid/cooling-water-yard.png" alt="Data-center cooling equipment, pipes and retention basin" loading="lazy" decoding="async" /></a>
+    <a class="article-rail-gallery__card" href="#virginia"><img src="{DEFERRED_IMAGE_PLACEHOLDER}" data-press-lazy-src="assets/data-center-grid/ratepayer-meter-still-life.png" alt="Household electric meter and utility bill with data-center reflection" loading="lazy" decoding="async" /></a>
   </div>
 </details>
 """.strip()
     hero_echo = annotated_figure(
-        "assets/data-center-grid/data-center-cooling-campus-thumbnail.png",
+        "assets/data-center-grid/data-center-cooling-campus-thumbnail.jpg",
         "Photorealistic editorial image of data-center cooling infrastructure beside a desert water basin and nearby neighborhoods",
         "Editorial art created for The Press. It is used as a visual explanation of the system under discussion, not as documentary evidence of a specific facility.",
         [("top-left", "cloud"), ("mid-right", "substation"), ("bottom-left", "homes")],

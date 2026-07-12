@@ -74,7 +74,7 @@ jobs:
       - name: Create review PR
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: ai-current-issue-thumbnails-${{ github.run_number }}
+          branch: automation/current-issue-thumbnails
           delete-branch: true
           title: "Add GPT Image 2 thumbnails to current issue"
           body: |

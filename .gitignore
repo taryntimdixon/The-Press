@@ -19,3 +19,11 @@ venv/
 .bak-*/
 ON_THIS_DAY_HISTORY_FEATURE_PACKAGE/
 tmp/
+_site/
+
+# Local illustration source libraries and drafts are not deployable site assets.
+assets/ny-love-letter/source-illustrations/
+assets/ny-love-letter/newspaper-pages/drafts/
+assets/ny-love-letter/nyc-*.png
+assets/ny-love-letter/newspaper-pages/*-draft.png
+assets/ny-love-letter/newspaper-pages/*-retouched.png

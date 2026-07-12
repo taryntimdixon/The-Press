@@ -4,8 +4,14 @@
     <title>The Press</title>
     <link>https://thepress.live/index.html</link>
     <description>Source-forward news across politics, culture, technology, economics, education, health, philosophy, science, world, opinion, and cartoons.</description>
-    <lastBuildDate>Mon, 08 Jun 2026 09:00:00 -0400</lastBuildDate>
+    <lastBuildDate>Mon, 15 Jun 2026 09:00:00 -0400</lastBuildDate>
     <item>
+  <title>A Love Letter to New York</title>
+  <link>https://thepress.live/culture-a-love-letter-to-new-york.html</link>
+  <guid>https://thepress.live/culture-a-love-letter-to-new-york.html</guid>
+  <pubDate>Mon, 15 Jun 2026 09:00:00 -0400</pubDate>
+  <description>A newspaper-style illustrated edition of New York City, built from full-page visual stories about the places, teams, institutions, and civic systems that make the city feel alive.</description>
+</item> <item>
   <title>Cartels Beneath the State</title>
   <link>https://thepress.live/world-cartels-beneath-the-state.html</link>
   <guid>https://thepress.live/world-cartels-beneath-the-state.html</guid>
@@ -119,12 +125,6 @@
   <guid>https://thepress.live/sports-texas-holdem-prime-time-moment-back.html</guid>
   <pubDate>Mon, 04 May 2026 10:00:00 -0400</pubDate>
   <description>With the WSOP Main Event returning to ESPN for a three-night final table, poker is trying to turn its biggest tournament back into must-watch TV.</description>
-</item> <item>
-  <title>The Pentagon Just Let Big AI Into the Classified Room</title>
-  <link>https://thepress.live/technology-pentagon-ai-classified-networks.html</link>
-  <guid>https://thepress.live/technology-pentagon-ai-classified-networks.html</guid>
-  <pubDate>Sun, 03 May 2026 16:30:00 -0400</pubDate>
-  <description>The Pentagon&#x27;s classified-network AI agreements are not a chatbot story. They are the moment frontier models, cloud infrastructure, and defense power began moving into the same secured room — with Anthropic&#x27;s empty chair revealing the fight over who controls the guardrails.</description>
 </item>
   </channel>
 </rss>

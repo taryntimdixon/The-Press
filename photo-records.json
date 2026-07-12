@@ -1,9 +1,17 @@
 [
   {
+    "story": "A Love Letter to New York",
+    "page": "culture-a-love-letter-to-new-york.html",
+    "section": "Culture",
+    "image": "assets/ny-love-letter/a-love-letter-to-new-york-thumbnail.jpg",
+    "alt": "Illustrated New York City collage with the Manhattan skyline, Brooklyn Bridge, subway entrance, yellow taxi, harbor, and map details on warm newsprint",
+    "credit": "The Press illustrated newspaper edition"
+  },
+  {
     "story": "Cartels Beneath the State",
     "page": "world-cartels-beneath-the-state.html",
     "section": "World",
-    "image": "assets/press-display/article-thumbnails/2026-06-09-cartels-beneath-state-floating-head.png",
+    "image": "assets/press-display/article-thumbnails/2026-06-09-cartels-beneath-state-floating-head.jpg",
     "alt": "Glossy stylized floating illustrated head of a mustached man against a bright blue sky with soft white clouds",
     "credit": ""
   },
@@ -35,7 +43,7 @@
     "story": "The Data Center Is the New Utility Bill",
     "page": "technology-the-data-center-is-the-new-utility-bill.html",
     "section": "Technology",
-    "image": "assets/data-center-grid/data-center-cooling-campus-thumbnail.png",
+    "image": "assets/data-center-grid/data-center-cooling-campus-thumbnail.jpg",
     "alt": "Data-center cooling towers and pipes beside a desert water basin, with nearby neighborhoods and mountains in the distance",
     "credit": "The Press photorealistic editorial visual"
   },

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-29T14:42:25.026841+00:00",
+  "generated_at": "2026-07-12T02:53:52.720315+00:00",
   "story_count": 80,
   "stories": [
     {
@@ -9,14 +9,14 @@
       "section": "Culture",
       "section_slug": "culture",
       "type": "Illustrated Feature",
-      "dek": "A newspaper-style illustrated edition of New York City, built from full-page visual stories about the places, teams, institutions, and civic systems that make the city feel alive.",
+      "dek": "A deeply sourced, page-spread love letter to New York City: five boroughs, transit, food, rent, labor, culture, immigration, public space, water, beauty, pressure, and the impossible public bargain that still makes the city matter.",
       "url": "culture-a-love-letter-to-new-york.html",
       "author": "Nia Calder",
       "published": "June 15, 2026 • 9:00 a.m. EDT",
       "published_iso": "2026-06-15T13:00:00+00:00",
       "updated": "June 15, 2026 • 9:00 a.m. EDT",
       "updated_iso": "2026-06-15T13:00:00+00:00",
-      "image": "assets/ny-love-letter/a-love-letter-to-new-york-thumbnail.png",
+      "image": "assets/ny-love-letter/a-love-letter-to-new-york-thumbnail.jpg",
       "image_alt": "Illustrated New York City collage with the Manhattan skyline, Brooklyn Bridge, subway entrance, yellow taxi, harbor, and map details on warm newsprint",
       "keywords": [
         "New York City",
@@ -57,7 +57,7 @@
       "published_iso": "2026-06-08T13:00:00+00:00",
       "updated": "June 8, 2026 • 9:00 a.m. EDT",
       "updated_iso": "2026-06-08T13:00:00+00:00",
-      "image": "assets/press-display/article-thumbnails/2026-06-09-cartels-beneath-state-floating-head.png",
+      "image": "assets/press-display/article-thumbnails/2026-06-09-cartels-beneath-state-floating-head.jpg",
       "image_alt": "Glossy stylized floating illustrated head of a mustached man against a bright blue sky with soft white clouds",
       "keywords": [
         "cartels",
@@ -198,7 +198,7 @@
       "published_iso": "2026-06-03T13:30:00+00:00",
       "updated": "June 3, 2026 • 9:30 a.m. EDT",
       "updated_iso": "2026-06-03T13:30:00+00:00",
-      "image": "assets/data-center-grid/data-center-cooling-campus-thumbnail.png",
+      "image": "assets/data-center-grid/data-center-cooling-campus-thumbnail.jpg",
       "image_alt": "Data-center cooling towers and pipes beside a desert water basin, with nearby neighborhoods and mountains in the distance",
       "keywords": [
         "AI data centers",

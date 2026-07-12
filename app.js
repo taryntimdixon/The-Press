@@ -26,6 +26,24 @@ function pressSiteAssetUrl(path) {
   return resolved.href;
 }
 
+function pressDeferredImageSource(image) {
+  if (!image) return '';
+  return image.getAttribute?.('data-press-lazy-src')
+    || image.currentSrc
+    || image.getAttribute?.('src')
+    || '';
+}
+
+function pressLoadDeferredImage(image) {
+  const source = image?.getAttribute?.('data-press-lazy-src') || '';
+  if (!source) return;
+  const srcset = image.getAttribute('data-press-lazy-srcset') || '';
+  image.removeAttribute('data-press-lazy-src');
+  image.removeAttribute('data-press-lazy-srcset');
+  if (srcset) image.setAttribute('srcset', srcset);
+  image.setAttribute('src', source);
+}
+
 function pressIndexSlug(value) {
   return String(value ?? '')
     .trim()
@@ -140,6 +158,68 @@ if (document.readyState === 'loading') {
   script.src = pressSiteAssetUrl('assets/press-fonts.js?v=1779692200');
   script.defer = true;
   document.head.appendChild(script);
+})();
+
+(() => {
+  const selector = 'img[data-press-lazy-src]';
+
+  function boot() {
+    const images = Array.from(document.querySelectorAll(selector));
+    if (!images.length) return;
+    if (!('IntersectionObserver' in window)) {
+      images.forEach(pressLoadDeferredImage);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        pressLoadDeferredImage(entry.target);
+      });
+    }, { rootMargin: '300px 0px' });
+
+    images.forEach((image) => observer.observe(image));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
+
+(() => {
+  const selector = '.drone-social-feature .press-static-post';
+
+  function loadRailPhoto(card) {
+    card.style.setProperty('--rail-photo-active', 'var(--rail-photo)');
+  }
+
+  function boot() {
+    const cards = Array.from(document.querySelectorAll(selector));
+    if (!cards.length) return;
+    if (!('IntersectionObserver' in window)) {
+      cards.forEach(loadRailPhoto);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        loadRailPhoto(entry.target);
+      });
+    }, { rootMargin: '900px 0px' });
+
+    cards.forEach((card) => observer.observe(card));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
 })();
 
 (() => {
@@ -409,8 +489,7 @@ if (document.readyState === 'loading') {
   const articleImagePointerStarts = new Map();
 
   function getImageLightboxSource(image) {
-    if (!image) return '';
-    return image.currentSrc || image.getAttribute('src') || '';
+    return pressDeferredImageSource(image);
   }
 
   function clampImageLightboxValue(value, min, max) {
@@ -4097,7 +4176,7 @@ function enhanceBreakingStrip(stories) {
       : window.location.href;
     const url = new URL(issuePath, shareBase).href;
     const imageNode = root.querySelector('img');
-    const imageUrl = normalizeShareAssetUrl(imageNode?.currentSrc || imageNode?.getAttribute('src') || '');
+    const imageUrl = normalizeShareAssetUrl(pressDeferredImageSource(imageNode));
 
     return {
       type: 'belowFoldIssue',
@@ -4158,7 +4237,7 @@ function enhanceBreakingStrip(stories) {
       const node = document.querySelector(selector);
       const raw = node?.tagName === 'META'
         ? node.getAttribute('content')
-        : node?.currentSrc || node?.getAttribute('src');
+        : pressDeferredImageSource(node);
       const url = normalizeShareAssetUrl(raw, options);
       if (url) return url;
     }
@@ -4179,7 +4258,7 @@ function enhanceBreakingStrip(stories) {
       const title = collapseWhitespace(titleNode?.textContent || link?.textContent || '');
       if (!url || !title || seen.has(url)) return;
       const img = card.querySelector('img');
-      const imageUrl = normalizeShareAssetUrl(img?.currentSrc || img?.getAttribute('src') || '');
+      const imageUrl = normalizeShareAssetUrl(pressDeferredImageSource(img));
       if (!imageUrl) return;
       const section = collapseWhitespace(card.querySelector('.eyebrow, [data-section], .story-card__meta, .lead-panel__meta')?.textContent || '')
         .split(/[•/]/)[0]
@@ -5136,7 +5215,7 @@ function enhanceBreakingStrip(stories) {
     const stripWidth = Math.round(profile.canvasWidth || (viewportWidth * scale));
     const background = '#ece1cf';
     const pages = (await Promise.all(pageNodes.map(async (node, index) => {
-      const src = normalizeShareAssetUrl(node.currentSrc || node.getAttribute('src') || '');
+      const src = normalizeShareAssetUrl(pressDeferredImageSource(node));
       if (!src) return null;
       const image = await loadContinuousArticleScrollImage(src, node).catch((error) => {
         console.warn(`NYC page ${index + 1} could not be loaded for scroll export.`, error);
@@ -5191,7 +5270,7 @@ function enhanceBreakingStrip(stories) {
     if (!source) return [];
     const seen = new Set();
     return Array.from(source.querySelectorAll('.ny-love-page--newspaper-opener .ny-love-newspaper-sheet > img')).filter((image) => {
-      const src = normalizeShareAssetUrl(image.currentSrc || image.getAttribute('src') || '');
+      const src = normalizeShareAssetUrl(pressDeferredImageSource(image));
       if (!src || seen.has(src)) return false;
       seen.add(src);
       return true;
@@ -5320,7 +5399,7 @@ function enhanceBreakingStrip(stories) {
     const image = index < (limits.maxFigureSections || ARTICLE_SCROLL_READER_LIMITS.maxFigureSections)
       ? segment.querySelector('figure img, img')
       : null;
-    const imageUrl = normalizeShareAssetUrl(image?.currentSrc || image?.getAttribute('src') || '');
+    const imageUrl = normalizeShareAssetUrl(pressDeferredImageSource(image));
     return {
       number: `Section ${String(index + 1).padStart(2, '0')}`,
       heading: getArticleScrollCleanText(segment.querySelector('h2, h3, h4')) || collapseWhitespace(segment.getAttribute('aria-label') || ''),
@@ -6028,7 +6107,7 @@ function enhanceBreakingStrip(stories) {
     const image = index < ARTICLE_SCROLL_READER_LIMITS.maxFigureSections
       ? segment.querySelector('figure img, img')
       : null;
-    const imageUrl = normalizeShareAssetUrl(image?.currentSrc || image?.getAttribute('src') || '');
+    const imageUrl = normalizeShareAssetUrl(pressDeferredImageSource(image));
     if (imageUrl) {
       const figure = buildArticleScrollFigure(imageUrl, image?.getAttribute('alt') || '');
       const caption = getArticleScrollCleanText(image.closest('figure')?.querySelector('figcaption'));
@@ -6113,7 +6192,7 @@ function enhanceBreakingStrip(stories) {
 
   function prepareBelowFoldLivePreviewMedia(root) {
     root.querySelectorAll('img').forEach((img) => {
-      const raw = img.currentSrc || img.getAttribute('src') || '';
+      const raw = pressDeferredImageSource(img);
       const url = normalizeShareAssetUrl(raw);
       if (url) img.setAttribute('src', url);
       img.removeAttribute('srcset');
@@ -6434,7 +6513,7 @@ function enhanceBreakingStrip(stories) {
   async function normalizeBelowFoldCaptureMedia(root) {
     const images = Array.from(root.querySelectorAll('img'));
     await Promise.all(images.map(async (img) => {
-      const raw = img.currentSrc || img.getAttribute('src') || '';
+      const raw = pressDeferredImageSource(img);
       const url = normalizeShareAssetUrl(raw);
       if (url) {
         const shouldEmbed = shouldEmbedBelowFoldCaptureImage(url);
@@ -7662,7 +7741,7 @@ function enhanceBreakingStrip(stories) {
       .filter((text) => text.length > 1 && text.length < 34)
       .slice(0, BELOW_FOLD_SCROLL_STORY_CRITERIA.maxFactChips);
     const img = node.querySelector('img');
-    const imageUrl = normalizeShareAssetUrl(img?.currentSrc || img?.getAttribute('src') || '');
+    const imageUrl = normalizeShareAssetUrl(pressDeferredImageSource(img));
     return {
       kicker,
       heading,
