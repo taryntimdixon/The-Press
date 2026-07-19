@@ -4029,11 +4029,11 @@ function enhanceBreakingStrip(stories) {
     maxDurationSeconds: 30,
     videoDurationSeconds: 30,
     recorderTailCompensationMs: 100,
-    scrollPixelsPerSecond: 310,
-    frameRate: 30,
-    videoBitsPerSecond: 16000000,
+    scrollPixelsPerSecond: 207,
+    frameRate: 60,
+    videoBitsPerSecond: 12000000,
     recorderTimesliceMs: 250,
-    mobileVideoBitsPerSecond: 12000000,
+    mobileVideoBitsPerSecond: 8000000,
     mobileRecorderTimesliceMs: 1000,
     maxScrollProgress: 1,
   });
@@ -4831,7 +4831,15 @@ function enhanceBreakingStrip(stories) {
     configureInstagramStoryStyleControls(modal, context);
   }
 
-  function getBelowFoldScrollVideoProfile() {
+  function getBelowFoldScrollVideoProfile(context = null) {
+    if (isContinuousArticleScrollContext(context)) {
+      return {
+        canvasWidth: 720,
+        canvasHeight: 1280,
+        viewportWidth: 430,
+        orientation: 'story',
+      };
+    }
     return {
       canvasWidth: 1080,
       canvasHeight: 1920,
@@ -8541,20 +8549,20 @@ function enhanceBreakingStrip(stories) {
     const holdEnd = options.holdEnd ?? 500;
     const total = options.total ?? (holdStart + duration + holdBottom + returnDuration + holdEnd);
     const frameDelay = options.frameDelay ?? (1000 / Math.max(2, Math.min(60, options.frameRate || 60)));
-    const renderThreshold = Math.max(1, frameDelay * 0.88);
+    const cadenceSlack = Math.max(0.5, frameDelay * 0.12);
     const maxProgress = Math.max(0, Math.min(1, Number(options.maxProgress) || 1));
 
     return new Promise((resolve) => {
       const startedAt = performance.now();
-      let lastRenderedAt = startedAt - frameDelay;
+      let nextFrameAt = startedAt;
+      let frameIndex = 0;
 
       const tick = (timestamp) => {
         const now = Number.isFinite(timestamp) ? timestamp : performance.now();
-        const elapsed = Math.min(total, Math.max(0, now - startedAt));
-        const finished = elapsed >= total;
-        const renderNow = finished || now - lastRenderedAt >= renderThreshold;
+        const renderNow = now + cadenceSlack >= nextFrameAt;
 
         if (renderNow) {
+          const elapsed = Math.min(total, frameIndex * frameDelay);
           const progress = getBelowFoldScrollAnimationProgress(elapsed, {
             duration,
             holdStart,
@@ -8564,12 +8572,13 @@ function enhanceBreakingStrip(stories) {
           const frameProgress = progress * maxProgress;
           drawBelowFoldScrollFrame(ctx, strip, frameProgress);
           options.onFrame?.(frameProgress);
-          lastRenderedAt = now;
-        }
+          frameIndex += 1;
+          nextFrameAt += frameDelay;
 
-        if (finished) {
-          resolve();
-          return;
+          if (elapsed >= total) {
+            resolve();
+            return;
+          }
         }
 
         if (window.requestAnimationFrame && (!document.visibilityState || document.visibilityState === 'visible')) {
