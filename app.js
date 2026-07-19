@@ -3466,18 +3466,31 @@ if (document.readyState === 'loading') {
 
   window.PressHomepageLeadRotation = (() => {
     const storageKey = 'press-homepage-refresh-lead-key';
+    const priorityKeys = new Set([
+      'memory-mob-ties-the-files.html',
+      'culture-a-love-letter-to-new-york.html',
+      'world-cartels-beneath-the-state.html',
+    ]);
+    const priorityChance = 0.75;
     let currentKey = '';
 
-    function chooseKey(keys) {
+    function chooseKey(keys, options = {}) {
       const candidates = Array.from(new Set((keys || []).filter(Boolean)));
       if (!document.body.classList.contains('page-home') || !candidates.length) return candidates[0] || '';
-      if (currentKey && candidates.includes(currentKey)) return currentKey;
+      if (!options.force && currentKey && candidates.includes(currentKey)) return currentKey;
 
       const previousKey = readKey();
-      const previousIndex = candidates.indexOf(previousKey);
-      const index = previousIndex >= 0 ? (previousIndex + 1) % candidates.length : 0;
+      const freshCandidates = candidates.length > 1
+        ? candidates.filter((key) => key !== previousKey)
+        : candidates;
+      const priorityCandidates = freshCandidates.filter((key) => priorityKeys.has(key));
+      const standardCandidates = freshCandidates.filter((key) => !priorityKeys.has(key));
+      const favorPriority = priorityCandidates.length > 0
+        && (!standardCandidates.length || Math.random() < priorityChance);
+      const pool = favorPriority ? priorityCandidates : (standardCandidates.length ? standardCandidates : priorityCandidates);
+      const chosenKey = pool[Math.floor(Math.random() * pool.length)] || freshCandidates[0] || candidates[0];
 
-      rememberKey(candidates[index]);
+      rememberKey(chosenKey);
       return currentKey;
     }
 
@@ -3507,6 +3520,21 @@ if (document.readyState === 'loading') {
         return '';
       }
     }
+
+    function randomizeRestoredHomepage() {
+      if (!document.body.classList.contains('page-home')) return;
+      const buttons = Array.from(document.querySelectorAll('[data-lead-button]'));
+      const keys = buttons.map((button) => button.dataset.storyKey || '').filter(Boolean);
+      currentKey = '';
+      const chosenKey = chooseKey(keys, { force: true });
+      const chosenButton = buttons.find((button) => button.dataset.storyKey === chosenKey);
+      chosenButton?.click();
+    }
+
+    window.addEventListener('pageshow', (event) => {
+      if (!event.persisted) return;
+      window.requestAnimationFrame(randomizeRestoredHomepage);
+    });
 
     return { chooseKey, rememberKey, chooseTarget, rememberTarget };
   })();
@@ -3994,15 +4022,17 @@ function enhanceBreakingStrip(stories) {
     captureAreaBudget: 26000000,
     maxFlattenedCanvasArea: 24000000,
     maxFlattenedCanvasHeight: 32000,
-    minDurationSeconds: 107,
-    maxDurationSeconds: 127,
-    scrollPixelsPerSecond: 269,
+    minDurationSeconds: 30,
+    maxDurationSeconds: 30,
+    videoDurationSeconds: 30,
+    recorderTailCompensationMs: 100,
+    scrollPixelsPerSecond: 310,
     frameRate: 30,
     videoBitsPerSecond: 16000000,
-    mobileVideoBitsPerSecond: 6000000,
-    mobileRecorderTimesliceMs: 5000,
-    mobileDurationSeconds: 30,
-    mobileMaxScrollProgress: 0.2,
+    recorderTimesliceMs: 250,
+    mobileVideoBitsPerSecond: 12000000,
+    mobileRecorderTimesliceMs: 1000,
+    maxScrollProgress: 1,
   });
   const BELOW_FOLD_SCROLL_STORY_CRITERIA = Object.freeze({
     maxCards: 12,
@@ -5053,7 +5083,6 @@ function enhanceBreakingStrip(stories) {
 
     const streamFrameRate = Math.max(24, Math.min(60, timing.frameRate || 60));
     const stream = canvas.captureStream(streamFrameRate);
-    const streamVideoTrack = stream.getVideoTracks?.()[0] || null;
     const chunks = [];
     const recorderOptions = {
       videoBitsPerSecond: getBelowFoldScrollVideoBitsPerSecond(context),
@@ -5068,18 +5097,13 @@ function enhanceBreakingStrip(stories) {
       recorder.onstop = () => resolve();
     });
 
-    if (continuousArticleScroll) updateBelowFoldLiveScrollPreviewProgress(modal, 0);
+    if (continuousArticleScroll) {
+      await waitForBelowFoldLiveScrollPreviewStart(modal, timing.duration, timing.maxProgress);
+    }
     recorder.start(getBelowFoldScrollRecorderTimeslice(context));
     drawBelowFoldScrollFrame(ctx, strip, 0);
-    streamVideoTrack?.requestFrame?.();
     await waitForNextScrollPreviewFrame();
-    await animateBelowFoldScrollStrip(canvas, strip, {
-      ...timing,
-      onFrame: (progress) => {
-        streamVideoTrack?.requestFrame?.();
-        if (continuousArticleScroll) updateBelowFoldLiveScrollPreviewProgress(modal, progress);
-      },
-    });
+    await animateBelowFoldScrollStrip(canvas, strip, timing);
     setInstagramStoryStatus(status, 'Finalizing scroll video...');
     recorder.requestData?.();
     if (recorder.state !== 'inactive') recorder.stop();
@@ -5213,12 +5237,13 @@ function enhanceBreakingStrip(stories) {
     const scale = Math.max(1, limits.stripScale || ARTICLE_CONTINUOUS_SCROLL_READER_LIMITS.stripScale || 2);
     const viewportWidth = profile.viewportWidth || 430;
     const stripWidth = Math.round(profile.canvasWidth || (viewportWidth * scale));
-    const background = '#ece1cf';
+    const evidenceLightbox = Boolean(document.querySelector('.press-image-edition--evidence-lightbox'));
+    const background = evidenceLightbox ? '#070707' : '#ece1cf';
     const pages = (await Promise.all(pageNodes.map(async (node, index) => {
       const src = normalizeShareAssetUrl(pressDeferredImageSource(node));
       if (!src) return null;
       const image = await loadContinuousArticleScrollImage(src, node).catch((error) => {
-        console.warn(`NYC page ${index + 1} could not be loaded for scroll export.`, error);
+        console.warn(`Article page ${index + 1} could not be loaded for scroll export.`, error);
         return null;
       });
       const naturalWidth = image?.naturalWidth || image?.width || 0;
@@ -5234,11 +5259,16 @@ function enhanceBreakingStrip(stories) {
 
     let cursorY = 0;
     const pageLayouts = pages.map((page) => {
-      const height = Math.max(1, Math.round(stripWidth * (page.naturalHeight / page.naturalWidth)));
+      const inset = evidenceLightbox ? Math.max(10, Math.round(stripWidth * 0.045)) : 0;
+      const width = stripWidth - (inset * 2);
+      const height = Math.max(1, Math.round(width * (page.naturalHeight / page.naturalWidth)));
       const layout = {
         ...page,
+        x: inset,
         y: cursorY,
+        width,
         height,
+        evidenceLightbox,
       };
       cursorY += height;
       return layout;
@@ -5258,18 +5288,62 @@ function enhanceBreakingStrip(stories) {
         paper: background,
       },
     };
-    if (typeof callbacks.onFirstFrame === 'function') callbacks.onFirstFrame(strip);
-    return strip;
+    const optimizedStrip = flattenContinuousArticlePageImageStrip(strip, limits, profile);
+    if (typeof callbacks.onFirstFrame === 'function') callbacks.onFirstFrame(optimizedStrip);
+    return optimizedStrip;
+  }
+
+  function flattenContinuousArticlePageImageStrip(strip, limits, profile) {
+    if (!Array.isArray(strip?.pages) || !strip.pages.length) return strip;
+    const width = Math.ceil(strip.width || profile?.canvasWidth || 1080);
+    const viewportHeight = Math.ceil(profile?.canvasHeight || 1920);
+    const durationSeconds = Math.max(1, Number(limits?.videoDurationSeconds) || 30);
+    const scrollDistance = Math.max(0, Number(limits?.scrollPixelsPerSecond) || 0) * durationSeconds;
+    const height = Math.min(strip.height, Math.ceil(viewportHeight + scrollDistance + 4));
+    if (!width || !height || width * height > (limits?.maxFlattenedCanvasArea || 24000000)) return strip;
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.fillStyle = strip.theme?.screen || '#070707';
+      ctx.fillRect(0, 0, width, height);
+      drawContinuousArticlePageLayoutsSlice(ctx, strip.pages, {
+        sourceY: 0,
+        sourceHeight: height,
+        destX: 0,
+        destY: 0,
+        destWidth: width,
+        scale: 1,
+      });
+      return {
+        ...strip,
+        canvas,
+        pages: [],
+      };
+    } catch (error) {
+      console.warn('Connected page roll optimization unavailable.', error);
+      return strip;
+    }
   }
 
   function collectContinuousArticlePageImageNodes() {
     const body = document.querySelector('[data-article-body], .generated-story, .article-body');
+    const imageEdition = body?.matches?.('.press-image-edition')
+      ? body
+      : body?.querySelector?.('.press-image-edition');
     const source = body?.matches?.('.ny-love-letter-feature')
       ? body
       : body?.querySelector?.('.ny-love-letter-feature');
-    if (!source) return [];
+    const pageImages = imageEdition
+      ? imageEdition.querySelectorAll('.press-image-edition__page .press-image-edition__sheet > img')
+      : source?.querySelectorAll('.ny-love-page--newspaper-opener .ny-love-newspaper-sheet > img');
+    if (!pageImages?.length) return [];
     const seen = new Set();
-    return Array.from(source.querySelectorAll('.ny-love-page--newspaper-opener .ny-love-newspaper-sheet > img')).filter((image) => {
+    return Array.from(pageImages).filter((image) => {
       const src = normalizeShareAssetUrl(pressDeferredImageSource(image));
       if (!src || seen.has(src)) return false;
       seen.add(src);
@@ -5758,8 +5832,10 @@ function enhanceBreakingStrip(stories) {
     let liveScrollStarted = false;
     let liveScrollStartAt = 0;
     let liveScrollDurationOverride = 0;
+    let liveScrollTargetProgress = 1;
     let liveScrollStartPromise = null;
     let resolveLiveScrollStart = null;
+    let liveScrollMaxScroll = 0;
     const getLiveScrollStartPromise = () => {
       if (!liveScrollStartPromise) {
         liveScrollStartPromise = new Promise((resolve) => {
@@ -5779,6 +5855,15 @@ function enhanceBreakingStrip(stories) {
       const scale = phoneRect.width / viewportWidth;
       liveScreen.style.transform = `scale(${scale})`;
       liveScreen.style.height = `${Math.ceil(phoneRect.height / scale)}px`;
+    };
+    const measureLiveScroll = () => {
+      updateScale();
+      const phoneRect = livePhone.getBoundingClientRect();
+      if (!phoneRect.width) return 0;
+      const scale = phoneRect.width / viewportWidth;
+      const visibleHeight = Math.max(1, phoneRect.height / scale);
+      liveScrollMaxScroll = Math.max(0, capturePage.scrollHeight - visibleHeight);
+      return liveScrollMaxScroll;
     };
     const armLiveScrollStart = (delayOverride = null) => {
       const startPromise = getLiveScrollStartPromise();
@@ -5815,12 +5900,7 @@ function enhanceBreakingStrip(stories) {
         window.setTimeout(startLiveScroll, delay);
         return;
       }
-      updateScale();
-      const phoneRect = livePhone.getBoundingClientRect();
-      if (!phoneRect.width) return;
-      const scale = phoneRect.width / viewportWidth;
-      const visibleHeight = Math.max(1, phoneRect.height / scale);
-      const maxScroll = Math.max(0, capturePage.scrollHeight - visibleHeight);
+      const maxScroll = measureLiveScroll();
       if (maxScroll <= 8) {
         resolveLiveScrollStarted(false);
         return;
@@ -5835,7 +5915,12 @@ function enhanceBreakingStrip(stories) {
       const duration = liveScrollDurationOverride || getBelowFoldLivePreviewScrollDuration(maxScroll, context);
       const runAnimation = () => {
         if (!livePreview.isConnected) return;
-        liveScrollAnimation = animateBelowFoldLivePreviewScroll(capturePage, maxScroll, duration, livePreview);
+        liveScrollAnimation = animateBelowFoldLivePreviewScroll(
+          capturePage,
+          maxScroll * liveScrollTargetProgress,
+          duration,
+          livePreview
+        );
         resolveLiveScrollStarted(true);
       };
       if (window.requestAnimationFrame) {
@@ -5846,12 +5931,7 @@ function enhanceBreakingStrip(stories) {
     };
     const setLiveScrollProgress = (progress = 0) => {
       if (!livePreview.isConnected) return false;
-      updateScale();
-      const phoneRect = livePhone.getBoundingClientRect();
-      if (!phoneRect.width) return false;
-      const scale = phoneRect.width / viewportWidth;
-      const visibleHeight = Math.max(1, phoneRect.height / scale);
-      const maxScroll = Math.max(0, capturePage.scrollHeight - visibleHeight);
+      const maxScroll = liveScrollMaxScroll || measureLiveScroll();
       if (maxScroll <= 8) return false;
       const clampedProgress = Math.max(0, Math.min(1, Number(progress) || 0));
       liveScrollAnimation?.cancel?.();
@@ -5861,13 +5941,15 @@ function enhanceBreakingStrip(stories) {
       capturePage.style.backfaceVisibility = 'hidden';
       capturePage.style.transformStyle = 'preserve-3d';
       capturePage.style.willChange = 'transform';
-      capturePage.style.transform = `translate3d(0, -${Math.round(maxScroll * clampedProgress)}px, 0)`;
+      capturePage.style.transform = `translate3d(0, -${(maxScroll * clampedProgress).toFixed(3)}px, 0)`;
       resolveLiveScrollStarted(true);
       return true;
     };
-    livePreview._pressStartLiveScroll = (durationOverride = 0) => {
+    livePreview._pressStartLiveScroll = (durationOverride = 0, targetProgress = 1) => {
       const override = Number(durationOverride);
       if (Number.isFinite(override) && override > 0) liveScrollDurationOverride = Math.round(override);
+      const progress = Number(targetProgress);
+      liveScrollTargetProgress = Number.isFinite(progress) ? Math.max(0, Math.min(1, progress)) : 1;
       liveScrollAnimation?.cancel?.();
       liveScrollStarted = false;
       liveScrollStartAt = 0;
@@ -5888,15 +5970,15 @@ function enhanceBreakingStrip(stories) {
     }
   }
 
-  function startBelowFoldLiveScrollPreview(modal, duration) {
+  function startBelowFoldLiveScrollPreview(modal, duration, targetProgress = 1) {
     const livePreview = modal?.querySelector('[data-below-fold-live-preview]');
     if (!livePreview || typeof livePreview._pressStartLiveScroll !== 'function') return Promise.resolve(false);
-    return livePreview._pressStartLiveScroll(duration);
+    return livePreview._pressStartLiveScroll(duration, targetProgress);
   }
 
-  function waitForBelowFoldLiveScrollPreviewStart(modal, duration) {
+  function waitForBelowFoldLiveScrollPreviewStart(modal, duration, targetProgress = 1) {
     return Promise.race([
-      startBelowFoldLiveScrollPreview(modal, duration),
+      startBelowFoldLiveScrollPreview(modal, duration, targetProgress),
       new Promise((resolve) => window.setTimeout(() => resolve(false), 1200)),
     ]).catch(() => false);
   }
@@ -5910,6 +5992,16 @@ function enhanceBreakingStrip(stories) {
   function animateBelowFoldLivePreviewScroll(capturePage, maxScroll, duration, livePreview) {
     const scrollDistance = Math.round(Math.max(0, maxScroll || 0));
     const totalDuration = Math.max(1000, duration || 36000);
+    if (typeof capturePage.animate === 'function') {
+      return capturePage.animate([
+        { transform: 'translate3d(0, 0, 0)' },
+        { transform: `translate3d(0, -${scrollDistance}px, 0)` },
+      ], {
+        duration: totalDuration,
+        easing: 'linear',
+        fill: 'forwards',
+      });
+    }
     const startedAt = getBelowFoldPreviewNow();
     let frameId = 0;
     let cancelled = false;
@@ -5925,7 +6017,7 @@ function enhanceBreakingStrip(stories) {
       if (cancelled || !livePreview?.isConnected) return;
       const elapsed = Math.max(0, getBelowFoldPreviewNow() - startedAt);
       const progress = Math.min(1, elapsed / totalDuration);
-      capturePage.style.transform = `translate3d(0, -${Math.round(scrollDistance * progress)}px, 0)`;
+      capturePage.style.transform = `translate3d(0, -${(scrollDistance * progress).toFixed(3)}px, 0)`;
       if (progress < 1) {
         if (window.requestAnimationFrame) {
           frameId = window.requestAnimationFrame(tick);
@@ -5950,8 +6042,8 @@ function enhanceBreakingStrip(stories) {
   function getBelowFoldLivePreviewScrollDuration(maxScroll, context) {
     if (isContinuousArticleScrollContext(context)) {
       const limits = getArticleScrollReaderLimits(context);
-      if (isMobileShareDevice() && limits.mobileDurationSeconds) {
-        return Math.round(limits.mobileDurationSeconds * 1000);
+      if (limits.videoDurationSeconds) {
+        return Math.round(limits.videoDurationSeconds * 1000);
       }
       const seconds = Math.max(
         limits.minDurationSeconds,
@@ -6033,7 +6125,9 @@ function enhanceBreakingStrip(stories) {
     }
     const continuousFlow = buildContinuousArticleScrollFlow();
     if (continuousFlow) {
-      root.classList.add('press-article-scroll-reader--ny-love');
+      root.classList.add(continuousFlow.classList.contains('press-article-scroll-reader__image-edition-flow')
+        ? 'press-article-scroll-reader--image-edition'
+        : 'press-article-scroll-reader--ny-love');
       root.appendChild(continuousFlow);
       return root;
     } else {
@@ -6055,11 +6149,25 @@ function enhanceBreakingStrip(stories) {
   function isContinuousArticleScrollContext(context) {
     if (context?.type !== 'article') return false;
     const body = document.querySelector('[data-article-body], .generated-story, .article-body');
-    return Boolean(body?.matches?.('.ny-love-letter-feature') || body?.querySelector?.('.ny-love-letter-feature, .ny-love-page--newspaper-opener'));
+    return Boolean(
+      body?.matches?.('.ny-love-letter-feature, .press-image-edition')
+      || body?.querySelector?.('.ny-love-letter-feature, .ny-love-page--newspaper-opener, .press-image-edition')
+    );
   }
 
   function buildContinuousArticleScrollFlow() {
     const body = document.querySelector('[data-article-body], .generated-story, .article-body');
+    const imageEdition = body?.matches?.('.press-image-edition')
+      ? body
+      : body?.querySelector?.('.press-image-edition');
+    if (imageEdition) {
+      const clone = imageEdition.cloneNode(true);
+      clone.classList.add('press-article-scroll-reader__image-edition-flow');
+      clone.querySelectorAll('h2, figcaption').forEach((node) => node.remove());
+      prepareBelowFoldLivePreviewMedia(clone);
+      return clone;
+    }
+
     const source = body?.matches?.('.ny-love-letter-feature')
       ? body
       : body?.querySelector?.('.ny-love-letter-feature');
@@ -7136,6 +7244,10 @@ function enhanceBreakingStrip(stories) {
         padding:0 !important;
         background:#ece1cf !important;
       }
+      .press-scroll-capture-shell .press-article-scroll-reader.press-article-scroll-reader--image-edition{
+        padding:0 !important;
+        background:#070707 !important;
+      }
       .press-scroll-capture-shell .press-article-scroll-reader,
       .press-scroll-capture-shell .press-article-scroll-reader *{
         direction:ltr !important;
@@ -7266,6 +7378,37 @@ function enhanceBreakingStrip(stories) {
         clip:rect(0,0,0,0) !important;
         white-space:nowrap !important;
         border:0 !important;
+      }
+      .press-scroll-capture-shell.page-article .press-article-scroll-reader.press-article-scroll-reader--image-edition .press-article-scroll-reader__image-edition-flow,
+      .press-scroll-capture-shell.page-article .press-article-scroll-reader.press-article-scroll-reader--image-edition .press-image-edition__page,
+      .press-scroll-capture-shell.page-article .press-article-scroll-reader.press-article-scroll-reader--image-edition figure.press-image-edition__sheet{
+        display:block !important;
+        width:100% !important;
+        max-width:none !important;
+        min-height:0 !important;
+        margin:0 !important;
+        padding:0 !important;
+        gap:0 !important;
+        border:0 !important;
+        background:#070707 !important;
+        box-shadow:none !important;
+        overflow:visible !important;
+        break-inside:auto !important;
+      }
+      .press-scroll-capture-shell.page-article .press-article-scroll-reader.press-article-scroll-reader--image-edition .press-article-scroll-reader__image-edition-flow h2,
+      .press-scroll-capture-shell.page-article .press-article-scroll-reader.press-article-scroll-reader--image-edition .press-article-scroll-reader__image-edition-flow figcaption{
+        display:none !important;
+      }
+      .press-scroll-capture-shell.page-article .press-article-scroll-reader.press-article-scroll-reader--image-edition .press-article-scroll-reader__image-edition-flow figure.press-image-edition__sheet > img{
+        display:block !important;
+        width:100% !important;
+        max-width:none !important;
+        height:auto !important;
+        max-height:none !important;
+        margin:0 !important;
+        object-fit:contain !important;
+        object-position:center center !important;
+        filter:none !important;
       }
       .press-scroll-capture-shell .press-article-scroll-reader__section{
         display:grid;
@@ -8156,17 +8299,54 @@ function enhanceBreakingStrip(stories) {
       const sourceSliceHeight = Math.min(naturalHeight - sourceSliceY, (sliceHeight / pageHeight) * naturalHeight);
       if (sourceSliceHeight <= 0) continue;
 
+      const pageDestX = destX + ((page.x || 0) * scale);
+      const pageDestWidth = page.width ? page.width * scale : destWidth;
+      const pageDestY = destY + ((overlapTop - sourceY) * scale);
+      const pageDestHeight = sliceHeight * scale;
+
+      if (page.evidenceLightbox && pageDestX > destX) {
+        const leftGlow = ctx.createLinearGradient(destX, 0, pageDestX, 0);
+        leftGlow.addColorStop(0, 'rgba(7,7,7,0)');
+        leftGlow.addColorStop(1, 'rgba(210,139,88,.18)');
+        ctx.fillStyle = leftGlow;
+        ctx.fillRect(destX, pageDestY, pageDestX - destX, pageDestHeight);
+
+        const pageRight = pageDestX + pageDestWidth;
+        const frameRight = destX + destWidth;
+        const rightGlow = ctx.createLinearGradient(pageRight, 0, frameRight, 0);
+        rightGlow.addColorStop(0, 'rgba(210,139,88,.18)');
+        rightGlow.addColorStop(1, 'rgba(7,7,7,0)');
+        ctx.fillStyle = rightGlow;
+        ctx.fillRect(pageRight, pageDestY, frameRight - pageRight, pageDestHeight);
+      }
+
       ctx.drawImage(
         page.image,
         0,
         sourceSliceY,
         naturalWidth,
         sourceSliceHeight,
-        destX,
-        destY + ((overlapTop - sourceY) * scale),
-        destWidth,
-        sliceHeight * scale
+        pageDestX,
+        pageDestY,
+        pageDestWidth,
+        pageDestHeight
       );
+
+      if (page.evidenceLightbox && index > 0 && pageY >= sourceY && pageY <= sourceEnd) {
+        const seamY = destY + ((pageY - sourceY) * scale);
+        const seamInset = destWidth * 0.07;
+        const seam = ctx.createLinearGradient(destX + seamInset, 0, destX + destWidth - seamInset, 0);
+        seam.addColorStop(0, 'rgba(166,54,46,0)');
+        seam.addColorStop(.14, 'rgba(166,54,46,.9)');
+        seam.addColorStop(.86, 'rgba(166,54,46,.9)');
+        seam.addColorStop(1, 'rgba(166,54,46,0)');
+        ctx.save();
+        ctx.fillStyle = seam;
+        ctx.shadowColor = 'rgba(166,54,46,.7)';
+        ctx.shadowBlur = Math.max(3, 7 * scale);
+        ctx.fillRect(destX + seamInset, seamY - Math.max(1, scale), destWidth - (seamInset * 2), Math.max(1, 2 * scale));
+        ctx.restore();
+      }
     }
   }
 
@@ -8219,14 +8399,14 @@ function enhanceBreakingStrip(stories) {
     const scrollPixelsPerSecond = isArticle
       ? articleLimits.scrollPixelsPerSecond
       : BELOW_FOLD_SCROLL_STORY_CRITERIA.scrollPixelsPerSecond;
-    const mobileContinuousDurationSeconds = continuousArticleScroll
-      && isMobileShareDevice()
-      && articleLimits?.mobileDurationSeconds;
-    const maxProgress = mobileContinuousDurationSeconds
-      ? Math.max(0.05, Math.min(1, articleLimits?.mobileMaxScrollProgress || 1))
-      : 1;
-    const seconds = mobileContinuousDurationSeconds
-      ? mobileContinuousDurationSeconds / ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER
+    const continuousDurationSeconds = continuousArticleScroll
+      ? Number(articleLimits?.videoDurationSeconds) || 0
+      : 0;
+    const continuousAnimationSeconds = continuousDurationSeconds
+      ? Math.max(1, continuousDurationSeconds - ((Number(articleLimits?.recorderTailCompensationMs) || 0) / 1000))
+      : 0;
+    const seconds = continuousAnimationSeconds
+      ? continuousAnimationSeconds
       : (metrics.maxScroll > 0
         ? Math.max(
         minDurationSeconds,
@@ -8236,7 +8416,13 @@ function enhanceBreakingStrip(stories) {
         )
       )
         : (isArticle ? minDurationSeconds : 6));
-    const duration = Math.round(seconds * (isArticle ? ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER : 1) * 1000);
+    const configuredMaxProgress = continuousArticleScroll
+      ? Math.max(0.05, Math.min(1, articleLimits?.maxScrollProgress || 1))
+      : 1;
+    const maxProgress = continuousAnimationSeconds && metrics.maxScroll > 0
+      ? Math.min(configuredMaxProgress, (scrollPixelsPerSecond * seconds) / metrics.maxScroll)
+      : configuredMaxProgress;
+    const duration = Math.round(seconds * (continuousAnimationSeconds ? 1 : (isArticle ? ARTICLE_SCROLL_VIDEO_DURATION_MULTIPLIER : 1)) * 1000);
     return {
       duration,
       holdStart: continuousArticleScroll ? 0 : 260,
@@ -8264,7 +8450,7 @@ function enhanceBreakingStrip(stories) {
     if (isContinuousArticleScrollContext(context) && isMobileShareDevice()) {
       return limits.mobileRecorderTimesliceMs || 1000;
     }
-    return 1000;
+    return limits.recorderTimesliceMs || 1000;
   }
 
   function getArticleScrollReaderLimits(context) {
@@ -8292,10 +8478,10 @@ function enhanceBreakingStrip(stories) {
   function animateBelowFoldScrollStrip(canvas, strip, options = {}) {
     const ctx = canvas.getContext('2d');
     const duration = options.duration || 7600;
-    const holdStart = options.holdStart || 400;
-    const holdBottom = options.holdBottom || 0;
-    const returnDuration = options.returnDuration || 0;
-    const holdEnd = options.holdEnd || 500;
+    const holdStart = options.holdStart ?? 400;
+    const holdBottom = options.holdBottom ?? 0;
+    const returnDuration = options.returnDuration ?? 0;
+    const holdEnd = options.holdEnd ?? 500;
     const total = holdStart + duration + holdBottom + returnDuration + holdEnd;
     const frameRate = Math.max(2, Math.min(60, options.frameRate || 60));
     const frameDelay = 1000 / frameRate;
@@ -8346,37 +8532,52 @@ function enhanceBreakingStrip(stories) {
 
   function animateBelowFoldScrollStripFixedFrames(ctx, strip, options = {}) {
     const duration = options.duration || 7600;
-    const holdStart = options.holdStart || 400;
-    const holdBottom = options.holdBottom || 0;
-    const returnDuration = options.returnDuration || 0;
-    const holdEnd = options.holdEnd || 500;
-    const total = options.total || (holdStart + duration + holdBottom + returnDuration + holdEnd);
-    const frameDelay = options.frameDelay || (1000 / Math.max(2, Math.min(60, options.frameRate || 60)));
-    const startedAt = performance.now();
-    const totalFrames = Math.max(1, Math.ceil(total / frameDelay));
+    const holdStart = options.holdStart ?? 400;
+    const holdBottom = options.holdBottom ?? 0;
+    const returnDuration = options.returnDuration ?? 0;
+    const holdEnd = options.holdEnd ?? 500;
+    const total = options.total ?? (holdStart + duration + holdBottom + returnDuration + holdEnd);
+    const frameDelay = options.frameDelay ?? (1000 / Math.max(2, Math.min(60, options.frameRate || 60)));
+    const renderThreshold = Math.max(1, frameDelay * 0.88);
     const maxProgress = Math.max(0, Math.min(1, Number(options.maxProgress) || 1));
 
-    return (async () => {
-      for (let frameIndex = 0; frameIndex <= totalFrames; frameIndex += 1) {
-        const elapsed = Math.min(total, frameIndex * frameDelay);
-        const progress = getBelowFoldScrollAnimationProgress(elapsed, {
-          duration,
-          holdStart,
-          holdBottom,
-          returnDuration,
-        });
-        const frameProgress = progress * maxProgress;
-        drawBelowFoldScrollFrame(ctx, strip, frameProgress);
-        options.onFrame?.(frameProgress);
-        if (elapsed >= total || frameIndex >= totalFrames) break;
+    return new Promise((resolve) => {
+      const startedAt = performance.now();
+      let lastRenderedAt = startedAt - frameDelay;
 
-        const targetFrameAt = startedAt + ((frameIndex + 1) * frameDelay);
-        await waitForBelowFoldAnimationDelay(Math.max(0, targetFrameAt - performance.now()));
-      }
-      const finalProgress = returnDuration ? 0 : maxProgress;
-      drawBelowFoldScrollFrame(ctx, strip, finalProgress);
-      options.onFrame?.(finalProgress);
-    })();
+      const tick = (timestamp) => {
+        const now = Number.isFinite(timestamp) ? timestamp : performance.now();
+        const elapsed = Math.min(total, Math.max(0, now - startedAt));
+        const finished = elapsed >= total;
+        const renderNow = finished || now - lastRenderedAt >= renderThreshold;
+
+        if (renderNow) {
+          const progress = getBelowFoldScrollAnimationProgress(elapsed, {
+            duration,
+            holdStart,
+            holdBottom,
+            returnDuration,
+          });
+          const frameProgress = progress * maxProgress;
+          drawBelowFoldScrollFrame(ctx, strip, frameProgress);
+          options.onFrame?.(frameProgress);
+          lastRenderedAt = now;
+        }
+
+        if (finished) {
+          resolve();
+          return;
+        }
+
+        if (window.requestAnimationFrame && (!document.visibilityState || document.visibilityState === 'visible')) {
+          window.requestAnimationFrame(tick);
+        } else {
+          window.setTimeout(() => tick(performance.now()), frameDelay);
+        }
+      };
+
+      tick(startedAt);
+    });
   }
 
   function waitForBelowFoldAnimationDelay(delay) {
@@ -9677,11 +9878,11 @@ function enhanceBreakingStrip(stories) {
     document.body.appendChild(link);
     let started = false;
     try {
-      link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+      link.click();
       started = true;
     } catch (_) {
       try {
-        link.click();
+        link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
         started = true;
       } catch (__) {
         started = false;
@@ -10980,7 +11181,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const chosenKey = window.PressHomepageLeadRotation?.chooseKey?.(keys);
     const chosenIndex = keys.indexOf(chosenKey);
     if (chosenIndex <= 0) return items;
-    return items.slice(chosenIndex).concat(items.slice(0, chosenIndex));
+    return [items[chosenIndex]].concat(items.filter((_, index) => index !== chosenIndex));
   }
 
   function homepageHeroStoryKey(story) {
@@ -14803,41 +15004,66 @@ document.addEventListener("DOMContentLoaded", () => {
     button.dataset.livingTopBound = 'true';
     button.addEventListener('click', (event) => {
       event.preventDefault();
+      event.stopPropagation();
       scrollLivingArticleTop();
     });
   }
 
+  let livingTopAnimationFrame = 0;
+
   function scrollLivingArticleTop() {
-    const behavior = livingPrefersReducedMotion() ? 'auto' : 'smooth';
     const roots = [
       document.scrollingElement,
       document.documentElement,
       document.body,
     ].filter(Boolean);
 
-    roots.forEach((root) => {
-      if (typeof root.scrollTo === 'function') {
-        try {
-          root.scrollTo({ top: 0, behavior });
-        } catch (_) {
-          root.scrollTop = 0;
-        }
-      } else {
-        root.scrollTop = 0;
-      }
-    });
+    const setScrollPosition = (top) => {
+      roots.forEach((root) => {
+        root.scrollTop = top;
+      });
 
-    try {
-      window.scrollTo({ top: 0, behavior });
-    } catch (_) {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, top);
+    };
+
+    if (livingTopAnimationFrame) {
+      window.cancelAnimationFrame(livingTopAnimationFrame);
+      livingTopAnimationFrame = 0;
     }
 
-    window.requestAnimationFrame(() => {
-      roots.forEach((root) => {
-        root.scrollTop = 0;
-      });
-    });
+    const startTop = Math.max(
+      window.scrollY || 0,
+      ...roots.map((root) => root.scrollTop || 0),
+    );
+
+    if (livingPrefersReducedMotion() || startTop <= 1) {
+      setScrollPosition(0);
+      return;
+    }
+
+    // A quick, distance-aware elevator ride: long dossiers remain visible in motion
+    // without making short trips feel sluggish.
+    const duration = Math.min(3600, Math.max(850, (startTop / 11000) * 1000));
+    let startedAt = 0;
+
+    const animate = (timestamp) => {
+      if (!startedAt) startedAt = timestamp;
+      const progress = Math.min(1, (timestamp - startedAt) / duration);
+      const eased = progress < .5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      setScrollPosition(Math.round(startTop * (1 - eased)));
+
+      if (progress < 1) {
+        livingTopAnimationFrame = window.requestAnimationFrame(animate);
+      } else {
+        livingTopAnimationFrame = 0;
+        setScrollPosition(0);
+      }
+    };
+
+    livingTopAnimationFrame = window.requestAnimationFrame(animate);
   }
 
   function livingPrefersReducedMotion() {

@@ -2824,6 +2824,7 @@ def layout(
     include_progress: bool = False,
     extra_links: str = "",
     extra_scripts: str = "",
+    post_scripts: str = "",
     social_image: str = "",
     social_image_alt: str = "",
     social_image_width: object = "",
@@ -2840,6 +2841,8 @@ def layout(
     if extra_scripts:
         scripts.append(extra_scripts)
     scripts.append(f'<script src="app.js?v={h(APP_VERSION)}" defer></script>')
+    if post_scripts:
+        scripts.append(post_scripts)
     scripts_html = "\n".join(scripts)
     progress_html = f"  {progress}\n" if progress else ""
     header_html = f"  {header(current_section=current_section, current_aux=current_aux)}\n" if show_header else ""
@@ -3003,10 +3006,12 @@ def render_homepage() -> str:
         social_image_width="1200",
         social_image_height="630",
         social_title=SITE["name"],
+        extra_links=f'<link rel="stylesheet" href="homepage.css?v={h(asset_version("homepage.css"))}" />',
         extra_scripts="\n".join([
             f'<script src="assets/on-this-day-summary.js?v={h(asset_version("assets/on-this-day-summary.js"))}" defer></script>',
             f'<script src="assets/on-this-day-artwork.js?v={h(asset_version("assets/on-this-day-artwork.js"))}" defer></script>',
         ]),
+        post_scripts=f'<script src="homepage.js?v={h(asset_version("homepage.js"))}" defer></script>',
     )
 
 
@@ -3467,8 +3472,7 @@ def render_story(story: dict) -> str:
   <article class="{article_classes}"{article_attr_html}>
     <header class="article-hero">
       {folio_html}
-      <p class="eyebrow">{h(story['section'])} • {h(story['type'])}</p>
-      <h1 class="article-headline">{h(story['title'])}</h1>
+      <h1 class="article-headline">{h(story.get('displayTitle') or story['title'])}</h1>
       <p class="article-dek">{h(story['dek'])}</p>
       <div class="article-meta">
         <span>{h(public_byline(story))}</span>

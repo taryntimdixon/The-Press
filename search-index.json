@@ -1,5 +1,135 @@
 [
   {
+    "title": "Mob Ties: The Files",
+    "section": "Memory",
+    "type": "Visual Dossier",
+    "dek": "Thirty-eight illustrated plates move from Prohibition Chicago to the Ravenite raid—a working visual sequence of faces, raids, tools, crime scenes and underworld mythology.",
+    "url": "memory-mob-ties-the-files.html",
+    "author": "The Press",
+    "published": "July 18, 2026 • Local draft",
+    "keywords": [
+      "American Mafia",
+      "organized crime",
+      "Al Capone",
+      "Johnny Torrio",
+      "Lucky Luciano",
+      "Meyer Lansky",
+      "John Gotti",
+      "Chicago Outfit",
+      "Five Families",
+      "Prohibition",
+      "crime history",
+      "illustrated dossier"
+    ]
+  },
+  {
+    "title": "A Love Letter to New York",
+    "section": "Culture",
+    "type": "Illustrated Feature",
+    "dek": "A deeply sourced, page-spread love letter to New York City: five boroughs, transit, food, rent, labor, culture, immigration, public space, water, beauty, pressure, and the impossible public bargain that still makes the city matter.",
+    "url": "culture-a-love-letter-to-new-york.html",
+    "author": "Nia Calder",
+    "published": "June 15, 2026 • 9:00 a.m. EDT",
+    "keywords": [
+      "New York City",
+      "NYC",
+      "five boroughs",
+      "transit",
+      "MTA",
+      "housing",
+      "rent",
+      "immigration",
+      "food",
+      "Broadway",
+      "public space",
+      "waterfront",
+      "culture",
+      "urbanism",
+      "New York"
+    ]
+  },
+  {
+    "title": "Cartels Beneath the State",
+    "section": "World",
+    "type": "Investigation",
+    "dek": "A deep investigation into how modern cartels became criminal ecosystems: trafficking drugs, recruiting labor, taxing local economies, laundering money, corrupting institutions, and governing by fear beneath the state.",
+    "url": "world-cartels-beneath-the-state.html",
+    "author": "Samir Haddad",
+    "published": "June 8, 2026 • 9:00 a.m. EDT",
+    "keywords": [
+      "cartels",
+      "Mexico cartels",
+      "Sinaloa Cartel",
+      "CJNG",
+      "Los Chapitos",
+      "El Mayo Zambada",
+      "Ovidio Guzman Lopez",
+      "Teuchitlan",
+      "cartel recruitment",
+      "cartel extortion",
+      "money laundering",
+      "state capture",
+      "fentanyl",
+      "methamphetamine",
+      "cocaine trafficking",
+      "organized crime",
+      "missing persons",
+      "Genaro Garcia Luna",
+      "El Mencho"
+    ]
+  },
+  {
+    "title": "The Mission Statement Takes the Stand",
+    "section": "Cartoons",
+    "type": "Editorial Cartoon",
+    "dek": "An editorial cartoon on the Musk-OpenAI trial, where the legal deadline ended the case but the mission-versus-money question kept its seat in the courtroom.",
+    "url": "cartoons-the-mission-statement-takes-the-stand.html",
+    "author": "The Press",
+    "published": "June 5, 2026 • 11:00 a.m. EDT",
+    "keywords": [
+      "editorial cartoon",
+      "OpenAI",
+      "Elon Musk",
+      "Sam Altman",
+      "AI governance",
+      "nonprofit mission"
+    ]
+  },
+  {
+    "title": "Hate to See You Go",
+    "section": "Cartoons",
+    "type": "Comic",
+    "dek": "The first Press comic is about the little performance every app gives when a reader, customer, or exhausted human tries to leave.",
+    "url": "cartoons-hate-to-see-you-go.html",
+    "author": "The Press",
+    "published": "June 5, 2026 • 8:00 a.m. EDT",
+    "keywords": [
+      "comic",
+      "cartoons",
+      "subscription apps",
+      "unsubscribe",
+      "digital life",
+      "satire"
+    ]
+  },
+  {
+    "title": "The Cartoon Desk Opens Its Notebook",
+    "section": "Cartoons",
+    "type": "Editor's Note",
+    "dek": "The Press is adding a Cartoon Desk for editorial cartoons, visual satire, and drawn commentary. The rule is simple: make the joke sharp, make the label clear, and never ask readers to mistake invention for reporting.",
+    "url": "cartoons-the-cartoon-desk-opens-its-notebook.html",
+    "author": "The Press",
+    "published": "June 4, 2026 • 9:00 a.m. EDT",
+    "keywords": [
+      "editorial cartoons",
+      "satire",
+      "visual commentary",
+      "cartoon desk",
+      "opinion",
+      "media standards"
+    ]
+  },
+  {
     "title": "The Data Center Is the New Utility Bill",
     "section": "Technology",
     "type": "Investigation",
@@ -5702,23 +5832,6 @@
     "keywords": []
   },
   {
-    "title": "The Cartoon Desk Opens Its Notebook",
-    "section": "Cartoons",
-    "type": "Editor's Note",
-    "dek": "The Press is adding a Cartoon Desk for editorial cartoons, visual satire, and drawn commentary. The rule is simple: make the joke sharp, make the label clear, and never ask readers to mistake invention for reporting.",
-    "url": "cartoons-the-cartoon-desk-opens-its-notebook.html",
-    "author": "The Press",
-    "published": "June 4, 2026 • 9:00 a.m. EDT",
-    "keywords": [
-      "editorial cartoons",
-      "satire",
-      "visual commentary",
-      "cartoon desk",
-      "opinion",
-      "media standards"
-    ]
-  },
-  {
     "title": "Below the Fold: The Newsstand",
     "section": "Below the Fold",
     "type": "Newsstand",
@@ -5807,95 +5920,5 @@
     "excludeFromEdition": true,
     "excludeFromArchive": true,
     "excludeFromGallery": true
-  },
-  {
-    "title": "Hate to See You Go",
-    "section": "Cartoons",
-    "type": "Comic",
-    "dek": "The first Press comic is about the little performance every app gives when a reader, customer, or exhausted human tries to leave.",
-    "url": "cartoons-hate-to-see-you-go.html",
-    "author": "The Press",
-    "published": "June 5, 2026 • 8:00 a.m. EDT",
-    "keywords": [
-      "comic",
-      "cartoons",
-      "subscription apps",
-      "unsubscribe",
-      "digital life",
-      "satire"
-    ]
-  },
-  {
-    "title": "The Mission Statement Takes the Stand",
-    "section": "Cartoons",
-    "type": "Editorial Cartoon",
-    "dek": "An editorial cartoon on the Musk-OpenAI trial, where the legal deadline ended the case but the mission-versus-money question kept its seat in the courtroom.",
-    "url": "cartoons-the-mission-statement-takes-the-stand.html",
-    "author": "The Press",
-    "published": "June 5, 2026 • 11:00 a.m. EDT",
-    "keywords": [
-      "editorial cartoon",
-      "OpenAI",
-      "Elon Musk",
-      "Sam Altman",
-      "AI governance",
-      "nonprofit mission"
-    ]
-  },
-  {
-    "title": "Cartels Beneath the State",
-    "section": "World",
-    "type": "Investigation",
-    "dek": "A deep investigation into how modern cartels became criminal ecosystems: trafficking drugs, recruiting labor, taxing local economies, laundering money, corrupting institutions, and governing by fear beneath the state.",
-    "url": "world-cartels-beneath-the-state.html",
-    "author": "Samir Haddad",
-    "published": "June 8, 2026 • 9:00 a.m. EDT",
-    "keywords": [
-      "cartels",
-      "Mexico cartels",
-      "Sinaloa Cartel",
-      "CJNG",
-      "Los Chapitos",
-      "El Mayo Zambada",
-      "Ovidio Guzman Lopez",
-      "Teuchitlan",
-      "cartel recruitment",
-      "cartel extortion",
-      "money laundering",
-      "state capture",
-      "fentanyl",
-      "methamphetamine",
-      "cocaine trafficking",
-      "organized crime",
-      "missing persons",
-      "Genaro Garcia Luna",
-      "El Mencho"
-    ]
-  },
-  {
-    "title": "A Love Letter to New York",
-    "section": "Culture",
-    "type": "Flagship Analysis",
-    "dek": "A deeply sourced, page-spread love letter to New York City: five boroughs, transit, food, rent, labor, culture, immigration, public space, water, beauty, pressure, and the impossible public bargain that still makes the city matter.",
-    "url": "culture-a-love-letter-to-new-york.html",
-    "author": "Nia Calder",
-    "published": "June 15, 2026 • 9:00 a.m. EDT",
-    "keywords": [
-      "New York City",
-      "NYC",
-      "five boroughs",
-      "transit",
-      "MTA",
-      "housing",
-      "rent",
-      "immigration",
-      "food",
-      "Broadway",
-      "public space",
-      "waterfront",
-      "culture",
-      "urbanism",
-      "New York"
-    ]
   }
 ]
