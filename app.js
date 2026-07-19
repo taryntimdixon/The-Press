@@ -3466,12 +3466,6 @@ if (document.readyState === 'loading') {
 
   window.PressHomepageLeadRotation = (() => {
     const storageKey = 'press-homepage-refresh-lead-key';
-    const priorityKeys = new Set([
-      'memory-mob-ties-the-files.html',
-      'culture-a-love-letter-to-new-york.html',
-      'world-cartels-beneath-the-state.html',
-    ]);
-    const priorityChance = 0.75;
     let currentKey = '';
 
     function chooseKey(keys, options = {}) {
@@ -3483,12 +3477,7 @@ if (document.readyState === 'loading') {
       const freshCandidates = candidates.length > 1
         ? candidates.filter((key) => key !== previousKey)
         : candidates;
-      const priorityCandidates = freshCandidates.filter((key) => priorityKeys.has(key));
-      const standardCandidates = freshCandidates.filter((key) => !priorityKeys.has(key));
-      const favorPriority = priorityCandidates.length > 0
-        && (!standardCandidates.length || Math.random() < priorityChance);
-      const pool = favorPriority ? priorityCandidates : (standardCandidates.length ? standardCandidates : priorityCandidates);
-      const chosenKey = pool[Math.floor(Math.random() * pool.length)] || freshCandidates[0] || candidates[0];
+      const chosenKey = freshCandidates[Math.floor(Math.random() * freshCandidates.length)] || candidates[0];
 
       rememberKey(chosenKey);
       return currentKey;
