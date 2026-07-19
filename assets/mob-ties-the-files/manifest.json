@@ -1,0 +1,388 @@
+{
+  "slug": "memory-mob-ties-the-files",
+  "title": "Mob Ties",
+  "subtitle": "Thirty-one illustrated plates from the American underworld",
+  "status": "Local visual draft",
+  "disclosure": "Illustrated historical reconstructions; embedded claims have not yet been independently fact-checked.",
+  "chapters": [
+    {
+      "id": "chicago-and-the-outfit",
+      "number": "I",
+      "title": "Chicago and the Outfit",
+      "dek": "The portraits, raids, lawmen and machinery that made Prohibition-era Chicago a national myth."
+    },
+    {
+      "id": "the-old-order-falls",
+      "number": "II",
+      "title": "The Old Order Falls",
+      "dek": "New York's early bosses, and the violent succession that cleared the way for a different system."
+    },
+    {
+      "id": "the-national-syndicate",
+      "number": "III",
+      "title": "The National Syndicate",
+      "dek": "Luciano, Lansky, Siegel and the network that connected cities, rackets and ambition."
+    },
+    {
+      "id": "midcentury-power",
+      "number": "IV",
+      "title": "Midcentury Power",
+      "dek": "The quiet operators and public spectacles that defined the postwar families."
+    },
+    {
+      "id": "the-last-dons",
+      "number": "V",
+      "title": "The Last Dons",
+      "dek": "A late-century sequence of bosses, surveillance, burner phones and the raid that closed the era."
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "sourceId": 34,
+      "sourceFile": "f1424200-2d91-4414-b3f5-f4aa73389329.png",
+      "file": "002-johnny-torrio-profile.webp",
+      "chapter": "chicago-and-the-outfit",
+      "title": "Johnny Torrio profile",
+      "alt": "Illustrated Johnny Torrio profile surrounded by a timeline, Sicilian landscape, gambling objects, liquor bottles and a vintage car.",
+      "width": 1172,
+      "height": 1342
+    },
+    {
+      "page": 39,
+      "sourceId": 39,
+      "sourceFile": "9119f84c-9b41-4994-bbf1-f85beee96d30.png",
+      "file": "039-al-capone-men-of-note.webp",
+      "chapter": "chicago-and-the-outfit",
+      "title": "Al Capone: Men of Note",
+      "alt": "Illustrated Al Capone biography plate with a central portrait, quick facts, timeline, Chicago territory map, mugshot, criminal-enterprise notes and final-years summary.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 4,
+      "sourceId": 37,
+      "sourceFile": "dc11b60f-782c-4dbb-b41f-dd80cf79e762.png",
+      "file": "004-al-capone-arrest-dossier.webp",
+      "chapter": "chicago-and-the-outfit",
+      "title": "The arrest of Al Capone",
+      "alt": "Illustrated dossier about Al Capone with a portrait, mugshot-style panels, cash, fingerprints, a booking card, car and map.",
+      "width": 1024,
+      "height": 1536
+    },
+    {
+      "page": 5,
+      "sourceId": 10,
+      "sourceFile": "f5891b9b-5135-4e36-b620-23cbcbf7309f.png",
+      "file": "005-eliot-ness-reference-plate.webp",
+      "chapter": "chicago-and-the-outfit",
+      "title": "Eliot Ness reference plate",
+      "alt": "Illustrated Eliot Ness reference plate with a portrait, Chicago map, Treasury badge, hat, case notes and skyline.",
+      "width": 1172,
+      "height": 1342
+    },
+    {
+      "page": 17,
+      "sourceId": 11,
+      "sourceFile": "e28c9182-1910-4a94-abf5-3ba212b2ad30.png",
+      "file": "019-lucky-luciano-commission-profile.webp",
+      "chapter": "the-national-syndicate",
+      "title": "Lucky Luciano and the Commission",
+      "alt": "Illustrated Lucky Luciano profile with a central portrait, Commission seal, immigration map, skyline and document collage.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 18,
+      "sourceId": 6,
+      "sourceFile": "373c19c2-549f-43b5-af4c-f97e7bb3ee97.png",
+      "file": "018-lucky-luciano-architect-infographic.webp",
+      "chapter": "the-national-syndicate",
+      "title": "Lucky Luciano, the architect",
+      "alt": "Tall Lucky Luciano infographic with portrait, quick facts, timeline, maps, diagrams and source list.",
+      "width": 1024,
+      "height": 1536
+    },
+    {
+      "page": 22,
+      "sourceId": 32,
+      "sourceFile": "b91636fd-bc39-41c5-b63f-d0efc53c290d.png",
+      "file": "022-bugsy-siegel-profile.webp",
+      "chapter": "the-national-syndicate",
+      "title": "Bugsy Siegel profile",
+      "alt": "Illustrated Bugsy Siegel profile with a large portrait, Flamingo hotel, expense ledger, car and newspaper.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 23,
+      "sourceId": 33,
+      "sourceFile": "6ed6cf69-b44c-40c1-ab33-23bf4c97a257.png",
+      "file": "023-bugsy-siegel-assassination.webp",
+      "chapter": "the-national-syndicate",
+      "title": "Bugsy Siegel crime-scene plate",
+      "alt": "Illustrated crime-scene plate showing Bugsy Siegel slumped on a floral sofa with evidence objects and a room diagram.",
+      "width": 1173,
+      "height": 1341,
+      "graphic": true
+    },
+    {
+      "page": 32,
+      "sourceId": 15,
+      "sourceFile": "db398716-3463-4af2-b8af-87b8f2a45ec1.png",
+      "file": "032-paul-castellano-profile.webp",
+      "chapter": "the-last-dons",
+      "title": "Paul Castellano profile",
+      "alt": "Illustrated Paul Castellano profile with a large portrait, Manhattan skyline, timeline, family crests and generated file card.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 33,
+      "sourceId": 28,
+      "sourceFile": "d3102d8b-01e7-4eed-ba2b-4f1b1354ccfb.png",
+      "file": "033-paul-castellano-assassination.webp",
+      "chapter": "the-last-dons",
+      "title": "Paul Castellano assassination plate",
+      "alt": "Synthetic case-file illustration of Paul Castellano's assassination with a body on a sidewalk, scene map and evidence panels.",
+      "width": 1046,
+      "height": 1504,
+      "graphic": true
+    },
+    {
+      "page": 34,
+      "sourceId": 13,
+      "sourceFile": "4654e072-51d5-49a7-82fd-6e0e29df602c.png",
+      "file": "034-john-gotti-profile.webp",
+      "chapter": "the-last-dons",
+      "title": "John Gotti profile",
+      "alt": "Illustrated John Gotti profile with a large portrait, family portraits, rise-to-power timeline, courthouse and skyline.",
+      "width": 1172,
+      "height": 1342
+    },
+    {
+      "page": 35,
+      "sourceId": 14,
+      "sourceFile": "67faf129-49c6-4a19-a25e-2e4ea2ac2ad2 (1).png",
+      "file": "035-john-gotti-vehicle-exit.webp",
+      "chapter": "the-last-dons",
+      "title": "John Gotti leaving the car",
+      "alt": "Illustrated cutaway of John Gotti stepping from a dark luxury car with numbered annotations about presentation and security.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 38,
+      "sourceId": 2,
+      "sourceFile": "8fb6134a-ab69-4cb5-916e-b4d5a3a2b11c.png",
+      "file": "038-john-gotti-ravenite-raid.webp",
+      "chapter": "the-last-dons",
+      "title": "The Ravenite raid",
+      "alt": "Dark illustrated dossier about the John Gotti Ravenite Social Club raid with arrest scene, portraits, surveillance equipment and processing images.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 6,
+      "sourceId": 27,
+      "sourceFile": "30b83181-f2b9-43d0-8e2c-b03641651ed9.png",
+      "file": "006-frank-nitti-enforcer-profile.webp",
+      "chapter": "chicago-and-the-outfit",
+      "title": "Frank Nitti, the enforcer",
+      "alt": "Illustrated profile of Frank Nitti in side view with short overview and biographical text columns.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 8,
+      "sourceId": 18,
+      "sourceFile": "33c50b25-59f7-43f0-959d-945d188f1dc1.png",
+      "file": "010-joe-aiello-portrait-profile.webp",
+      "chapter": "chicago-and-the-outfit",
+      "title": "Joe Aiello portrait profile",
+      "alt": "Illustrated portrait profile of Joe Aiello in a straw hat with biography and key-detail columns.",
+      "width": 1170,
+      "height": 1344
+    },
+    {
+      "page": 10,
+      "sourceId": 17,
+      "sourceFile": "431e1f04-def8-4975-803e-8c22bf5efb40.png",
+      "file": "008-joe-aiello-dossier.webp",
+      "chapter": "chicago-and-the-outfit",
+      "title": "Joe Aiello dossier",
+      "alt": "Illustrated Joe Aiello dossier with paired portraits, a period car, weapons and a sequence of underworld scenes.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 12,
+      "sourceId": 26,
+      "sourceFile": "eae03eb5-d308-4c09-9fa2-704396f792cc.png",
+      "file": "012-joe-masseria-profile.webp",
+      "chapter": "the-old-order-falls",
+      "title": "Joe Masseria profile",
+      "alt": "Illustrated Joe Masseria profile with a formal portrait, New York waterfront, maps, storefronts and a period car.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 13,
+      "sourceId": 25,
+      "sourceFile": "93864a63-3782-4a80-af48-9e0a4ee263d7.png",
+      "file": "013-joe-masseria-assassination.webp",
+      "chapter": "the-old-order-falls",
+      "title": "Joe Masseria assassination plate",
+      "alt": "Illustrated crime-scene plate about Joe Masseria's assassination, centered on a bloodied hand holding a playing card.",
+      "width": 1023,
+      "height": 1537,
+      "graphic": true
+    },
+    {
+      "page": 14,
+      "sourceId": 23,
+      "sourceFile": "d730069c-fe48-44a5-8f30-daeecd746abd.png",
+      "file": "014-salvatore-maranzano-profile.webp",
+      "chapter": "the-old-order-falls",
+      "title": "Salvatore Maranzano profile",
+      "alt": "Tall illustrated profile of Salvatore Maranzano with a formal portrait and biographical notes.",
+      "width": 970,
+      "height": 1622
+    },
+    {
+      "page": 15,
+      "sourceId": 24,
+      "sourceFile": "4c0794d2-eb97-4aa2-8b9c-9928b7079995.png",
+      "file": "015-salvatore-maranzano-autopsy.webp",
+      "chapter": "the-old-order-falls",
+      "title": "Salvatore Maranzano autopsy plate",
+      "alt": "Synthetic medical-examiner-style illustration of Salvatore Maranzano with wound annotations and anatomical diagrams.",
+      "width": 1172,
+      "height": 1342,
+      "graphic": true
+    },
+    {
+      "page": 21,
+      "sourceId": 35,
+      "sourceFile": "3d694f20-205f-4fcd-a8d3-e16f105d806d.png",
+      "file": "021-meyer-lansky-profile.webp",
+      "chapter": "the-national-syndicate",
+      "title": "Meyer Lansky profile",
+      "alt": "Illustrated Meyer Lansky profile with a full-length portrait, ledger, hotel, gambling chips and bootlegging ship.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 24,
+      "sourceId": 29,
+      "sourceFile": "e84a490e-734f-4c4a-bfe6-3f0f12139054.png",
+      "file": "024-dutch-schultz-profile.webp",
+      "chapter": "the-national-syndicate",
+      "title": "Dutch Schultz profile",
+      "alt": "Illustrated Dutch Schultz profile with a large portrait, mugshot-style panel, beer business objects, newspaper and car.",
+      "width": 1172,
+      "height": 1342
+    },
+    {
+      "page": 25,
+      "sourceId": 20,
+      "sourceFile": "d7da5472-d6bb-4fe1-9197-29ad3dba8c53.png",
+      "file": "025-dutch-schultz-assassination.webp",
+      "chapter": "the-national-syndicate",
+      "title": "Dutch Schultz assassination case file",
+      "alt": "Synthetic case-file illustration of the Dutch Schultz assassination with a restaurant scene, evidence panels and diagrams.",
+      "width": 1178,
+      "height": 1335,
+      "graphic": true
+    },
+    {
+      "page": 26,
+      "sourceId": 22,
+      "sourceFile": "f4109ef5-540c-4c13-ab1b-4e96dbbc42eb.png",
+      "file": "026-albert-anastasia-profile.webp",
+      "chapter": "midcentury-power",
+      "title": "Albert Anastasia profile",
+      "alt": "Illustrated Albert Anastasia profile with a full-length portrait, associates, generated records, revolver, barber chair, car and map.",
+      "width": 1172,
+      "height": 1342
+    },
+    {
+      "page": 27,
+      "sourceId": 21,
+      "sourceFile": "8d549f29-fbf4-479d-bc53-343ac37b91bd.png",
+      "file": "027-albert-anastasia-assassination.webp",
+      "chapter": "midcentury-power",
+      "title": "Albert Anastasia assassination case file",
+      "alt": "Synthetic case-file plate about Albert Anastasia's assassination with a covered body in a barber shop and forensic diagrams.",
+      "width": 1174,
+      "height": 1340,
+      "graphic": true
+    },
+    {
+      "page": 28,
+      "sourceId": 30,
+      "sourceFile": "f931071f-abeb-46fc-91ab-ff4bc86f4d88.png",
+      "file": "028-vito-genovese-profile.webp",
+      "chapter": "midcentury-power",
+      "title": "Vito Genovese profile",
+      "alt": "Illustrated Vito Genovese profile with a large portrait, Manhattan skyline, fedora, court card, prison and office.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 29,
+      "sourceId": 31,
+      "sourceFile": "f23e44ca-1e57-46c9-9e12-3f9cade9a1a3.png",
+      "file": "029-frank-costello-profile.webp",
+      "chapter": "midcentury-power",
+      "title": "Frank Costello profile",
+      "alt": "Illustrated Frank Costello profile with a smiling full-length portrait, Manhattan scenes, construction and a Florida estate.",
+      "width": 1172,
+      "height": 1342
+    },
+    {
+      "page": 30,
+      "sourceId": 16,
+      "sourceFile": "08f3134c-468d-4a6a-b3f6-8c167a698966.png",
+      "file": "030-carlo-gambino-profile.webp",
+      "chapter": "midcentury-power",
+      "title": "Carlo Gambino profile",
+      "alt": "Illustrated Carlo Gambino profile with a central portrait, New York skyline, territory map, construction scene and vintage car.",
+      "width": 1172,
+      "height": 1342
+    },
+    {
+      "page": 31,
+      "sourceId": 1,
+      "sourceFile": "f7ee9fc6-6bee-4748-8455-98c7eb507745.png",
+      "file": "031-carmine-persico-profile.webp",
+      "chapter": "the-last-dons",
+      "title": "Carmine Persico profile",
+      "alt": "Illustrated Carmine Persico profile with a smoking portrait, biographical timeline, arrest scene and prison drawing.",
+      "width": 1172,
+      "height": 1342
+    },
+    {
+      "page": 36,
+      "sourceId": 8,
+      "sourceFile": "8dca930a-1454-4ae8-b9d9-48e796f3a1ce.png",
+      "file": "036-wiretapping-explainer.webp",
+      "chapter": "the-last-dons",
+      "title": "Wiretapping explainer",
+      "alt": "Hand-drawn-style wiretapping explainer with a rotary phone, splice connector, listening post and social-club sketch.",
+      "width": 1173,
+      "height": 1341
+    },
+    {
+      "page": 37,
+      "sourceId": 7,
+      "sourceFile": "9b102550-8761-48fb-943a-0f0824e74da9.png",
+      "file": "037-feature-phone-exploded-view.webp",
+      "chapter": "the-last-dons",
+      "title": "Feature-phone exploded view",
+      "alt": "Exploded product-style rendering of a small black feature phone, battery, circuit board, SIM card and casing.",
+      "width": 1173,
+      "height": 1341
+    }
+  ]
+}

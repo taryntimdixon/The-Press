@@ -1,5 +1,135 @@
 [
   {
+    "title": "Mob Ties",
+    "section": "Memory",
+    "type": "Visual Dossier",
+    "dek": "Thirty-one illustrated plates move from Prohibition Chicago to the Ravenite raid—a working visual sequence of faces, raids, tools, crime scenes and underworld mythology.",
+    "url": "memory-mob-ties-the-files.html",
+    "author": "The Press",
+    "published": "July 18, 2026 • Local draft",
+    "keywords": [
+      "American Mafia",
+      "organized crime",
+      "Al Capone",
+      "Johnny Torrio",
+      "Lucky Luciano",
+      "Meyer Lansky",
+      "John Gotti",
+      "Chicago Outfit",
+      "Five Families",
+      "Prohibition",
+      "crime history",
+      "illustrated dossier"
+    ]
+  },
+  {
+    "title": "A Love Letter to New York",
+    "section": "Culture",
+    "type": "Illustrated Feature",
+    "dek": "A deeply sourced, page-spread love letter to New York City: five boroughs, transit, food, rent, labor, culture, immigration, public space, water, beauty, pressure, and the impossible public bargain that still makes the city matter.",
+    "url": "culture-a-love-letter-to-new-york.html",
+    "author": "Nia Calder",
+    "published": "June 15, 2026 • 9:00 a.m. EDT",
+    "keywords": [
+      "New York City",
+      "NYC",
+      "five boroughs",
+      "transit",
+      "MTA",
+      "housing",
+      "rent",
+      "immigration",
+      "food",
+      "Broadway",
+      "public space",
+      "waterfront",
+      "culture",
+      "urbanism",
+      "New York"
+    ]
+  },
+  {
+    "title": "Cartels Beneath the State",
+    "section": "World",
+    "type": "Investigation",
+    "dek": "A deep investigation into how modern cartels became criminal ecosystems: trafficking drugs, recruiting labor, taxing local economies, laundering money, corrupting institutions, and governing by fear beneath the state.",
+    "url": "world-cartels-beneath-the-state.html",
+    "author": "Samir Haddad",
+    "published": "June 8, 2026 • 9:00 a.m. EDT",
+    "keywords": [
+      "cartels",
+      "Mexico cartels",
+      "Sinaloa Cartel",
+      "CJNG",
+      "Los Chapitos",
+      "El Mayo Zambada",
+      "Ovidio Guzman Lopez",
+      "Teuchitlan",
+      "cartel recruitment",
+      "cartel extortion",
+      "money laundering",
+      "state capture",
+      "fentanyl",
+      "methamphetamine",
+      "cocaine trafficking",
+      "organized crime",
+      "missing persons",
+      "Genaro Garcia Luna",
+      "El Mencho"
+    ]
+  },
+  {
+    "title": "The Mission Statement Takes the Stand",
+    "section": "Cartoons",
+    "type": "Editorial Cartoon",
+    "dek": "An editorial cartoon on the Musk-OpenAI trial, where the legal deadline ended the case but the mission-versus-money question kept its seat in the courtroom.",
+    "url": "cartoons-the-mission-statement-takes-the-stand.html",
+    "author": "The Press",
+    "published": "June 5, 2026 • 11:00 a.m. EDT",
+    "keywords": [
+      "editorial cartoon",
+      "OpenAI",
+      "Elon Musk",
+      "Sam Altman",
+      "AI governance",
+      "nonprofit mission"
+    ]
+  },
+  {
+    "title": "Hate to See You Go",
+    "section": "Cartoons",
+    "type": "Comic",
+    "dek": "The first Press comic is about the little performance every app gives when a reader, customer, or exhausted human tries to leave.",
+    "url": "cartoons-hate-to-see-you-go.html",
+    "author": "The Press",
+    "published": "June 5, 2026 • 8:00 a.m. EDT",
+    "keywords": [
+      "comic",
+      "cartoons",
+      "subscription apps",
+      "unsubscribe",
+      "digital life",
+      "satire"
+    ]
+  },
+  {
+    "title": "The Cartoon Desk Opens Its Notebook",
+    "section": "Cartoons",
+    "type": "Editor's Note",
+    "dek": "The Press is adding a Cartoon Desk for editorial cartoons, visual satire, and drawn commentary. The rule is simple: make the joke sharp, make the label clear, and never ask readers to mistake invention for reporting.",
+    "url": "cartoons-the-cartoon-desk-opens-its-notebook.html",
+    "author": "The Press",
+    "published": "June 4, 2026 • 9:00 a.m. EDT",
+    "keywords": [
+      "editorial cartoons",
+      "satire",
+      "visual commentary",
+      "cartoon desk",
+      "opinion",
+      "media standards"
+    ]
+  },
+  {
     "title": "The Data Center Is the New Utility Bill",
     "section": "Technology",
     "type": "Investigation",
@@ -5700,202 +5830,5 @@
     "author": "Julian Mercado",
     "published": "April 6, 2026 • 9:05 a.m. EDT",
     "keywords": []
-  },
-  {
-    "title": "The Cartoon Desk Opens Its Notebook",
-    "section": "Cartoons",
-    "type": "Editor's Note",
-    "dek": "The Press is adding a Cartoon Desk for editorial cartoons, visual satire, and drawn commentary. The rule is simple: make the joke sharp, make the label clear, and never ask readers to mistake invention for reporting.",
-    "url": "cartoons-the-cartoon-desk-opens-its-notebook.html",
-    "author": "The Press",
-    "published": "June 4, 2026 • 9:00 a.m. EDT",
-    "keywords": [
-      "editorial cartoons",
-      "satire",
-      "visual commentary",
-      "cartoon desk",
-      "opinion",
-      "media standards"
-    ]
-  },
-  {
-    "title": "Below the Fold: The Newsstand",
-    "section": "Below the Fold",
-    "type": "Newsstand",
-    "dek": "A browsable archive of every Below the Fold issue from The Press.",
-    "url": "below-the-fold.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Newsstand",
-      "archive"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "The Automation Ledger",
-    "section": "Below the Fold",
-    "type": "Issue",
-    "dek": "A dense newspaper spread on automation moving through work, warehouses, robotaxis, labs, defense rooms, homes, humanoids, and AI agents.",
-    "url": "below-the-fold/automation-ledger.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Automation Review",
-      "Section A / Robots, Agents, Work"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "The Makers' Register",
-    "section": "Below the Fold",
-    "type": "Issue",
-    "dek": "A register of builders tied to specific turning points: Apple in 1976, Facebook in 2004, iPhone in 2007, Falcon 9 reuse in 2017, ChatGPT in 2022, and the GPU supply chain underneath it all.",
-    "url": "below-the-fold/makers-register.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Technology Review",
-      "Section M / Makers"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "The Remote Work List",
-    "section": "Below the Fold",
-    "type": "Issue",
-    "dek": "Ten places ranked by factual work infrastructure: transit, airports, universities, labs, studios, employers, cultural institutions, outdoor access, and real tradeoffs.",
-    "url": "below-the-fold/remote-work-usa.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Remote Work USA",
-      "Pages B1-B10"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "After the Moonshot, the Moon Work Begins",
-    "section": "Below the Fold",
-    "type": "Issue",
-    "dek": "Artemis II was NASA's first crewed lunar flyby in more than 50 years: 9 days, 1 hour, 32 minutes; four astronauts; SLS from Pad 39B; Orion around the Moon; Pacific recovery on April 10, 2026.",
-    "url": "below-the-fold/artemis-future.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Artemis Dispatch",
-      "Section C / Moon to Mars"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "Hate to See You Go",
-    "section": "Cartoons",
-    "type": "Comic",
-    "dek": "The first Press comic is about the little performance every app gives when a reader, customer, or exhausted human tries to leave.",
-    "url": "cartoons-hate-to-see-you-go.html",
-    "author": "The Press",
-    "published": "June 5, 2026 • 8:00 a.m. EDT",
-    "keywords": [
-      "comic",
-      "cartoons",
-      "subscription apps",
-      "unsubscribe",
-      "digital life",
-      "satire"
-    ]
-  },
-  {
-    "title": "The Mission Statement Takes the Stand",
-    "section": "Cartoons",
-    "type": "Editorial Cartoon",
-    "dek": "An editorial cartoon on the Musk-OpenAI trial, where the legal deadline ended the case but the mission-versus-money question kept its seat in the courtroom.",
-    "url": "cartoons-the-mission-statement-takes-the-stand.html",
-    "author": "The Press",
-    "published": "June 5, 2026 • 11:00 a.m. EDT",
-    "keywords": [
-      "editorial cartoon",
-      "OpenAI",
-      "Elon Musk",
-      "Sam Altman",
-      "AI governance",
-      "nonprofit mission"
-    ]
-  },
-  {
-    "title": "Cartels Beneath the State",
-    "section": "World",
-    "type": "Investigation",
-    "dek": "A deep investigation into how modern cartels became criminal ecosystems: trafficking drugs, recruiting labor, taxing local economies, laundering money, corrupting institutions, and governing by fear beneath the state.",
-    "url": "world-cartels-beneath-the-state.html",
-    "author": "Samir Haddad",
-    "published": "June 8, 2026 • 9:00 a.m. EDT",
-    "keywords": [
-      "cartels",
-      "Mexico cartels",
-      "Sinaloa Cartel",
-      "CJNG",
-      "Los Chapitos",
-      "El Mayo Zambada",
-      "Ovidio Guzman Lopez",
-      "Teuchitlan",
-      "cartel recruitment",
-      "cartel extortion",
-      "money laundering",
-      "state capture",
-      "fentanyl",
-      "methamphetamine",
-      "cocaine trafficking",
-      "organized crime",
-      "missing persons",
-      "Genaro Garcia Luna",
-      "El Mencho"
-    ]
-  },
-  {
-    "title": "A Love Letter to New York",
-    "section": "Culture",
-    "type": "Flagship Analysis",
-    "dek": "A deeply sourced, page-spread love letter to New York City: five boroughs, transit, food, rent, labor, culture, immigration, public space, water, beauty, pressure, and the impossible public bargain that still makes the city matter.",
-    "url": "culture-a-love-letter-to-new-york.html",
-    "author": "Nia Calder",
-    "published": "June 15, 2026 • 9:00 a.m. EDT",
-    "keywords": [
-      "New York City",
-      "NYC",
-      "five boroughs",
-      "transit",
-      "MTA",
-      "housing",
-      "rent",
-      "immigration",
-      "food",
-      "Broadway",
-      "public space",
-      "waterfront",
-      "culture",
-      "urbanism",
-      "New York"
-    ]
   }
 ]

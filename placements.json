@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-12T03:46:32.255385+00:00",
+  "generated_at": "2026-07-19T19:39:43.835325+00:00",
   "rules": {
     "live_window_days": 14,
     "dedupe": "url + cluster_id",
@@ -10,13 +10,13 @@
   "home": {
     "hero_slots": 7,
     "hero": [
+      "memory-mob-ties-the-files",
       "culture-a-love-letter-to-new-york",
+      "world-cartels-beneath-the-state",
       "technology-the-data-center-is-the-new-utility-bill",
       "science-wildlife-for-sale",
       "technology-drones-have-left-the-gadget-era",
-      "sports-world-cup-game-day-machine",
-      "world-europes-cocaine-boom-is-hiding-in-plain-sight",
-      "world-americas-military-year-is-a-map-of-force"
+      "sports-world-cup-game-day-machine"
     ],
     "secondary": [
       "2026-04-28-a-gunman-a-ballroom-and-a-shaken-washington",
@@ -31,16 +31,17 @@
       "2026-04-27-wichita-s-one-robot-dog-has-a-july-rulebook-test"
     ],
     "editors_picks": [
+      "world-americas-military-year-is-a-map-of-force",
       "climate-the-mountain-that-fell-into-the-sea",
       "memory-the-internet-is-eating-its-own-memory",
-      "education-the-phone-free-school-day-is-a-live-experiment",
-      "technology-the-battery-is-becoming-the-grid"
+      "education-the-phone-free-school-day-is-a-live-experiment"
     ],
     "latest": [
-      "world-cartels-beneath-the-state",
       "cartoons-the-mission-statement-takes-the-stand",
       "cartoons-hate-to-see-you-go",
       "cartoons-the-cartoon-desk-opens-its-notebook",
+      "world-europes-cocaine-boom-is-hiding-in-plain-sight",
+      "world-americas-military-year-is-a-map-of-force",
       "climate-the-mountain-that-fell-into-the-sea",
       "systems-the-cold-chain-is-the-invisible-machine-that-feeds-the-world",
       "memory-the-internet-is-eating-its-own-memory",
@@ -50,8 +51,7 @@
       "science-the-ocean-has-a-fever-and-the-thermometer-is-everywhere",
       "climate-your-home-insurance-bill-is-the-new-climate-map",
       "sports-texas-holdem-prime-time-moment-back",
-      "technology-pentagon-ai-classified-networks",
-      "food-atla-noho-closing"
+      "technology-pentagon-ai-classified-networks"
     ],
     "daily": [
       "2026-04-28-a-gunman-a-ballroom-and-a-shaken-washington",
@@ -66,10 +66,11 @@
       "2026-04-27-imf-s-19-energy-shock-reaches-the-checkout-line"
     ],
     "breaking": [
-      "world-cartels-beneath-the-state",
       "cartoons-the-mission-statement-takes-the-stand",
       "cartoons-hate-to-see-you-go",
       "cartoons-the-cartoon-desk-opens-its-notebook",
+      "world-europes-cocaine-boom-is-hiding-in-plain-sight",
+      "world-americas-military-year-is-a-map-of-force",
       "climate-the-mountain-that-fell-into-the-sea",
       "systems-the-cold-chain-is-the-invisible-machine-that-feeds-the-world",
       "memory-the-internet-is-eating-its-own-memory",
@@ -78,10 +79,15 @@
       "technology-the-battery-is-becoming-the-grid",
       "science-the-ocean-has-a-fever-and-the-thermometer-is-everywhere",
       "climate-your-home-insurance-bill-is-the-new-climate-map",
-      "sports-texas-holdem-prime-time-moment-back",
-      "technology-pentagon-ai-classified-networks"
+      "sports-texas-holdem-prime-time-moment-back"
     ],
     "desk_pulse": [
+      {
+        "count": 2,
+        "latest_ts": 1784422800.0,
+        "story_id": "memory-mob-ties-the-files",
+        "section": "Memory"
+      },
       {
         "count": 7,
         "latest_ts": 1781528400.0,
@@ -129,12 +135,6 @@
         "latest_ts": 1778184000.0,
         "story_id": "systems-the-cold-chain-is-the-invisible-machine-that-feeds-the-world",
         "section": "Systems"
-      },
-      {
-        "count": 1,
-        "latest_ts": 1778179800.0,
-        "story_id": "memory-the-internet-is-eating-its-own-memory",
-        "section": "Memory"
       },
       {
         "count": 3,

@@ -3472,8 +3472,7 @@ def render_story(story: dict) -> str:
   <article class="{article_classes}"{article_attr_html}>
     <header class="article-hero">
       {folio_html}
-      <p class="eyebrow">{h(story['section'])} • {h(story['type'])}</p>
-      <h1 class="article-headline">{h(story['title'])}</h1>
+      <h1 class="article-headline">{h(story.get('displayTitle') or story['title'])}</h1>
       <p class="article-dek">{h(story['dek'])}</p>
       <div class="article-meta">
         <span>{h(public_byline(story))}</span>

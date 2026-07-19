@@ -26,13 +26,13 @@
   "homepage": {
     "heroSlots": 7,
     "leadOrder": [
+      "memory-mob-ties-the-files.html",
       "culture-a-love-letter-to-new-york.html",
+      "world-cartels-beneath-the-state.html",
       "technology-the-data-center-is-the-new-utility-bill.html",
       "science-wildlife-for-sale.html",
       "technology-drones-have-left-the-gadget-era.html",
       "sports-world-cup-game-day-machine.html",
-      "world-europes-cocaine-boom-is-hiding-in-plain-sight.html",
-      "world-americas-military-year-is-a-map-of-force.html",
       "climate-the-mountain-that-fell-into-the-sea.html",
       "climate-your-home-insurance-bill-is-the-new-climate-map.html",
       "science-the-ocean-has-a-fever-and-the-thermometer-is-everywhere.html",
@@ -416,6 +416,7 @@
         "sports media"
       ],
       "stories": [
+        "memory-mob-ties-the-files.html",
         "technology-the-data-center-is-the-new-utility-bill.html",
         "cartoons-the-mission-statement-takes-the-stand.html",
         "cartoons-hate-to-see-you-go.html",
@@ -427,6 +428,67 @@
     }
   ],
   "stories": [
+    {
+      "slug": "memory-mob-ties-the-files",
+      "filename": "memory-mob-ties-the-files.html",
+      "title": "Mob Ties",
+      "displayTitle": "Mob Ties",
+      "section": "Memory",
+      "sectionSlug": "memory",
+      "type": "Visual Dossier",
+      "author": "The Press",
+      "authorSlug": "the-press",
+      "authorRole": "Editorial Desk",
+      "publishedLabel": "July 18, 2026 • Local draft",
+      "updatedLabel": "July 18, 2026 • Local draft",
+      "publishedIso": "2026-07-18T21:00:00-04:00",
+      "updatedIso": "2026-07-18T21:00:00-04:00",
+      "wordCount": "Visual draft",
+      "wordCountNumber": 0,
+      "readTime": "31 illustrated plates",
+      "dek": "Thirty-one illustrated plates move from Prohibition Chicago to the Ravenite raid—a working visual sequence of faces, raids, tools, crime scenes and underworld mythology.",
+      "image": "assets/mob-ties-the-files/pages/001-al-capone-portrait-plate.webp",
+      "imageWidth": 1024,
+      "imageHeight": 1536,
+      "heroImage": "assets/mob-ties-the-files/pages/001-al-capone-portrait-plate.webp",
+      "heroImageWidth": 1024,
+      "heroImageHeight": 1536,
+      "imageAlt": "Illustrated reference portrait of Al Capone in a pale fedora, dark blue suit and patterned tie.",
+      "imageCaptionHtml": "",
+      "imageCreditPlain": "The Press illustrated edition",
+      "imageAiGenerated": true,
+      "imageAiCaption": "AI-generated editorial artwork assembled for The Press.",
+      "imageCaption": "AI-generated editorial artwork assembled for The Press.",
+      "keywords": [
+        "American Mafia",
+        "organized crime",
+        "Al Capone",
+        "Johnny Torrio",
+        "Lucky Luciano",
+        "Meyer Lansky",
+        "John Gotti",
+        "Chicago Outfit",
+        "Five Families",
+        "Prohibition",
+        "crime history",
+        "illustrated dossier"
+      ],
+      "asideFile": "content/asides/memory-mob-ties-the-files.html",
+      "bodyFile": "content/bodies/memory-mob-ties-the-files.html",
+      "excerpt": "A 38-plate visual draft arranged as five loose chapters, with full-size zoom, lightweight WebP pages and an explicit editorial-review gate.",
+      "related": [
+        "world-cartels-beneath-the-state.html",
+        "culture-a-love-letter-to-new-york.html",
+        "memory-the-internet-is-eating-its-own-memory.html"
+      ],
+      "heroEligible": true,
+      "socialRailPattern": {
+        "className": "press-feature-body press-image-edition press-image-edition--archive",
+        "cardsInBody": 38,
+        "sourceCount": 0,
+        "notes": "Thirty-one AI-generated visual plates in a provisional five-chapter sequence with pending factual and provenance review."
+      }
+    },
     {
       "slug": "culture-a-love-letter-to-new-york",
       "filename": "culture-a-love-letter-to-new-york.html",

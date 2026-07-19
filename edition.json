@@ -1,5 +1,22 @@
 [
   {
+    "title": "Mob Ties",
+    "url": "memory-mob-ties-the-files.html",
+    "section": "Memory",
+    "type": "Visual Dossier",
+    "author": "The Press",
+    "publishedLabel": "July 18, 2026 • Local draft",
+    "updatedLabel": "July 18, 2026 • Local draft",
+    "publishedIso": "2026-07-18T21:00:00-04:00",
+    "updatedIso": "2026-07-18T21:00:00-04:00",
+    "wordCount": "Visual draft",
+    "readTime": "31 illustrated plates",
+    "dek": "Thirty-one illustrated plates move from Prohibition Chicago to the Ravenite raid—a working visual sequence of faces, raids, tools, crime scenes and underworld mythology.",
+    "image": "assets/mob-ties-the-files/pages/001-al-capone-portrait-plate.webp",
+    "imageAlt": "Illustrated reference portrait of Al Capone in a pale fedora, dark blue suit and patterned tie",
+    "imageCredit": "The Press illustrated edition"
+  },
+  {
     "title": "A Love Letter to New York",
     "url": "culture-a-love-letter-to-new-york.html",
     "section": "Culture",
