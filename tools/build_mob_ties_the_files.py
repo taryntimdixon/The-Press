@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the Mob Ties: The Files source fragments from its page manifest."""
+"""Render the Mob Ties source fragments from its page manifest."""
 
 from __future__ import annotations
 

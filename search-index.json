@@ -1,9 +1,9 @@
 [
   {
-    "title": "Mob Ties: The Files",
+    "title": "Mob Ties",
     "section": "Memory",
     "type": "Visual Dossier",
-    "dek": "Thirty-eight illustrated plates move from Prohibition Chicago to the Ravenite raid—a working visual sequence of faces, raids, tools, crime scenes and underworld mythology.",
+    "dek": "Thirty-one illustrated plates move from Prohibition Chicago to the Ravenite raid—a working visual sequence of faces, raids, tools, crime scenes and underworld mythology.",
     "url": "memory-mob-ties-the-files.html",
     "author": "The Press",
     "published": "July 18, 2026 • Local draft",
@@ -5830,95 +5830,5 @@
     "author": "Julian Mercado",
     "published": "April 6, 2026 • 9:05 a.m. EDT",
     "keywords": []
-  },
-  {
-    "title": "Below the Fold: The Newsstand",
-    "section": "Below the Fold",
-    "type": "Newsstand",
-    "dek": "A browsable archive of every Below the Fold issue from The Press.",
-    "url": "below-the-fold.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Newsstand",
-      "archive"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "The Automation Ledger",
-    "section": "Below the Fold",
-    "type": "Issue",
-    "dek": "A dense newspaper spread on automation moving through work, warehouses, robotaxis, labs, defense rooms, homes, humanoids, and AI agents.",
-    "url": "below-the-fold/automation-ledger.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Automation Review",
-      "Section A / Robots, Agents, Work"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "The Makers' Register",
-    "section": "Below the Fold",
-    "type": "Issue",
-    "dek": "A register of builders tied to specific turning points: Apple in 1976, Facebook in 2004, iPhone in 2007, Falcon 9 reuse in 2017, ChatGPT in 2022, and the GPU supply chain underneath it all.",
-    "url": "below-the-fold/makers-register.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Technology Review",
-      "Section M / Makers"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "The Remote Work List",
-    "section": "Below the Fold",
-    "type": "Issue",
-    "dek": "Ten places ranked by factual work infrastructure: transit, airports, universities, labs, studios, employers, cultural institutions, outdoor access, and real tradeoffs.",
-    "url": "below-the-fold/remote-work-usa.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Remote Work USA",
-      "Pages B1-B10"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
-  },
-  {
-    "title": "After the Moonshot, the Moon Work Begins",
-    "section": "Below the Fold",
-    "type": "Issue",
-    "dek": "Artemis II was NASA's first crewed lunar flyby in more than 50 years: 9 days, 1 hour, 32 minutes; four astronauts; SLS from Pad 39B; Orion around the Moon; Pacific recovery on April 10, 2026.",
-    "url": "below-the-fold/artemis-future.html",
-    "author": "The Press",
-    "published": "May 2026",
-    "keywords": [
-      "Below the Fold",
-      "Artemis Dispatch",
-      "Section C / Moon to Mars"
-    ],
-    "newsstandOnly": true,
-    "excludeFromEdition": true,
-    "excludeFromArchive": true,
-    "excludeFromGallery": true
   }
 ]

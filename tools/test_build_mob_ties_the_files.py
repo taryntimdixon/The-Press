@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for the manifest-driven Mob Ties: The Files generator."""
+"""Regression tests for the manifest-driven Mob Ties generator."""
 
 from __future__ import annotations
 
@@ -160,7 +160,7 @@ def test_evidence_lightbox_contract_is_scoped_to_the_dossier():
 
 def main():
     """Run all generator regression tests without writing production fragments."""
-    print("Running Mob Ties: The Files generator regression tests...\n")
+    print("Running Mob Ties generator regression tests...\n")
     test_manifest_array_order_controls_same_chapter_plate_numbers()
     test_missing_asset_stops_main_before_any_output_is_written()
     test_duplicate_chapter_id_fails_clearly()

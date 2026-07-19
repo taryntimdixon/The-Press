@@ -3528,6 +3528,20 @@ if (document.readyState === 'loading') {
       currentKey = '';
       const chosenKey = chooseKey(keys, { force: true });
       const chosenButton = buttons.find((button) => button.dataset.storyKey === chosenKey);
+      const chosenIndex = buttons.indexOf(chosenButton);
+      if (chosenIndex > 0) {
+        const rotatedButtons = buttons.slice(chosenIndex).concat(buttons.slice(0, chosenIndex));
+        const nav = chosenButton?.parentElement;
+        const panelBox = document.querySelector('.lead-switcher__panels');
+        const panelsByTarget = new Map(
+          Array.from(panelBox?.querySelectorAll('[data-lead-panel]') || []).map((panel) => [panel.id, panel])
+        );
+        rotatedButtons.forEach((button) => {
+          nav?.append(button);
+          const panel = panelsByTarget.get(button.dataset.target);
+          if (panel) panelBox?.append(panel);
+        });
+      }
       chosenButton?.click();
     }
 
@@ -11181,7 +11195,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const chosenKey = window.PressHomepageLeadRotation?.chooseKey?.(keys);
     const chosenIndex = keys.indexOf(chosenKey);
     if (chosenIndex <= 0) return items;
-    return [items[chosenIndex]].concat(items.filter((_, index) => index !== chosenIndex));
+    return items.slice(chosenIndex).concat(items.slice(0, chosenIndex));
   }
 
   function homepageHeroStoryKey(story) {

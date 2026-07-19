@@ -431,7 +431,7 @@
     {
       "slug": "memory-mob-ties-the-files",
       "filename": "memory-mob-ties-the-files.html",
-      "title": "Mob Ties: The Files",
+      "title": "Mob Ties",
       "displayTitle": "Mob Ties",
       "section": "Memory",
       "sectionSlug": "memory",
@@ -445,8 +445,8 @@
       "updatedIso": "2026-07-18T21:00:00-04:00",
       "wordCount": "Visual draft",
       "wordCountNumber": 0,
-      "readTime": "38 illustrated plates",
-      "dek": "Thirty-eight illustrated plates move from Prohibition Chicago to the Ravenite raid—a working visual sequence of faces, raids, tools, crime scenes and underworld mythology.",
+      "readTime": "31 illustrated plates",
+      "dek": "Thirty-one illustrated plates move from Prohibition Chicago to the Ravenite raid—a working visual sequence of faces, raids, tools, crime scenes and underworld mythology.",
       "image": "assets/mob-ties-the-files/pages/001-al-capone-portrait-plate.webp",
       "imageWidth": 1024,
       "imageHeight": 1536,
@@ -486,7 +486,7 @@
         "className": "press-feature-body press-image-edition press-image-edition--archive",
         "cardsInBody": 38,
         "sourceCount": 0,
-        "notes": "Thirty-eight AI-generated visual plates in a provisional five-chapter sequence with pending factual and provenance review."
+        "notes": "Thirty-one AI-generated visual plates in a provisional five-chapter sequence with pending factual and provenance review."
       }
     },
     {
