@@ -1275,7 +1275,7 @@ body.page-home :focus-visible {
   body.page-home .lead-panel__body {
     display: block;
     padding: 1.15rem;
-    background: linear-gradient(180deg, transparent, rgba(18, 17, 15, 0.94) 24%);
+    background: transparent;
   }
 
   body.page-home .lead-panel h2 {

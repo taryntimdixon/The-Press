@@ -476,17 +476,27 @@ if (document.readyState === 'loading') {
     'body.page-article .press-social-side figure > img',
     'body.page-article .press-social-side figure picture > img',
   ].join(',');
+  const INLINE_ARTICLE_IMAGE_SELECTOR = [
+    'body.page-article .ny-love-letter-feature .ny-love-newspaper-sheet > img',
+    'body.page-article .press-image-edition .press-image-edition__sheet > img',
+  ].join(',');
   const IMAGE_LIGHTBOX_MIN_ZOOM = 1;
   const IMAGE_LIGHTBOX_MAX_ZOOM = 6;
   const IMAGE_LIGHTBOX_ZOOM_STEP = 0.75;
   const IMAGE_LIGHTBOX_ZOOM_EPSILON = 0.01;
-  const ARTICLE_IMAGE_DOUBLE_TAP_DELAY = 300;
-  const ARTICLE_IMAGE_DOUBLE_TAP_DISTANCE = 46;
-  const ARTICLE_IMAGE_DOUBLE_TAP_ZOOM = 2.6;
+  const INLINE_IMAGE_MIN_ZOOM = 1;
+  const INLINE_IMAGE_MAX_ZOOM = 8;
+  const INLINE_IMAGE_DOUBLE_TAP_DELAY = 320;
+  const INLINE_IMAGE_DOUBLE_TAP_DISTANCE = 48;
+  const INLINE_IMAGE_DOUBLE_TAP_ZOOM = 2.8;
+  const INLINE_IMAGE_PAN_SENSITIVITY = 1.15;
+  const INLINE_IMAGE_RESET_EPSILON = 0.035;
   let activeLightbox = null;
-  let pendingArticleImageTap = null;
+  let activeInlineArticleImageZoom = null;
+  let pendingInlineArticleImageTap = null;
   let suppressArticleImageClickUntil = 0;
-  const articleImagePointerStarts = new Map();
+  const articleImagePointers = new Map();
+  let articleImagePointerListenersInstalled = false;
 
   function getImageLightboxSource(image) {
     return pressDeferredImageSource(image);
@@ -496,9 +506,8 @@ if (document.readyState === 'loading') {
     return Math.min(Math.max(value, min), max);
   }
 
-  function clearPendingArticleImageTap() {
-    if (pendingArticleImageTap?.timeoutId) window.clearTimeout(pendingArticleImageTap.timeoutId);
-    pendingArticleImageTap = null;
+  function clearPendingInlineArticleImageTap() {
+    pendingInlineArticleImageTap = null;
   }
 
   function getEnhancedArticleImageFromTarget(target) {
@@ -507,24 +516,244 @@ if (document.readyState === 'loading') {
     return image;
   }
 
-  function getArticleImageTapTarget(image, event) {
-    const rect = image?.getBoundingClientRect?.();
-    if (!rect?.width || !rect?.height || typeof event?.clientX !== 'number' || typeof event?.clientY !== 'number') {
-      return null;
+  function getInlineArticleImageFromTarget(target) {
+    if (activeInlineArticleImageZoom?.viewport?.contains?.(target)) {
+      return activeInlineArticleImageZoom.image;
     }
+    const image = target?.closest?.(INLINE_ARTICLE_IMAGE_SELECTOR);
+    if (!image || image.dataset.pressInlineImageZoom !== 'true') return null;
+    return image;
+  }
 
+  function isMatchingInlineArticleImageDoubleTap(previousTap, image, target, now) {
+    if (!previousTap || previousTap.image !== image || !target) return false;
+    if (now - previousTap.at > INLINE_IMAGE_DOUBLE_TAP_DELAY) return false;
+    return Math.hypot(target.clientX - previousTap.x, target.clientY - previousTap.y) <= INLINE_IMAGE_DOUBLE_TAP_DISTANCE;
+  }
+
+  function measureInlineImageFrame(viewport) {
+    const rect = viewport?.getBoundingClientRect?.();
+    if (!rect?.width || !rect?.height) return null;
     return {
-      clientX: event.clientX,
-      clientY: event.clientY,
-      normalizedX: clampImageLightboxValue((event.clientX - rect.left) / rect.width, 0, 1),
-      normalizedY: clampImageLightboxValue((event.clientY - rect.top) / rect.height, 0, 1),
+      rect,
+      centerX: rect.left + rect.width / 2,
+      centerY: rect.top + rect.height / 2,
     };
   }
 
-  function isMatchingArticleImageDoubleTap(previousTap, image, target, now) {
-    if (!previousTap || previousTap.image !== image || !target) return false;
-    if (now - previousTap.at > ARTICLE_IMAGE_DOUBLE_TAP_DELAY) return false;
-    return Math.hypot(target.clientX - previousTap.x, target.clientY - previousTap.y) <= ARTICLE_IMAGE_DOUBLE_TAP_DISTANCE;
+  function getInlineImageCenter(state, clientX, clientY) {
+    const frame = state?.frame;
+    if (!frame) return null;
+    return {
+      x: clientX - frame.centerX,
+      y: clientY - frame.centerY,
+    };
+  }
+
+  function getInlineImageFocalPoint(state, center) {
+    return {
+      x: (center.x - state.panX) / state.zoom,
+      y: (center.y - state.panY) / state.zoom,
+    };
+  }
+
+  function getInlineImagePanBounds(state) {
+    const frame = state?.frame;
+    if (!frame) return { x: 0, y: 0 };
+    return {
+      x: Math.max(0, ((state.imageWidth * state.zoom) - frame.rect.width) / 2),
+      y: Math.max(0, ((state.imageHeight * state.zoom) - frame.rect.height) / 2),
+    };
+  }
+
+  function clampInlineImagePan(state) {
+    const bounds = getInlineImagePanBounds(state);
+    state.panX = clampImageLightboxValue(state.panX, -bounds.x, bounds.x);
+    state.panY = clampImageLightboxValue(state.panY, -bounds.y, bounds.y);
+  }
+
+  function queueInlineImageTransform(state = activeInlineArticleImageZoom) {
+    if (!state || state.rafId) return;
+    state.rafId = window.requestAnimationFrame(() => {
+      state.rafId = 0;
+      if (activeInlineArticleImageZoom !== state) return;
+      state.image.style.transform = `translate3d(${state.panX}px, ${state.panY}px, 0) scale(${state.zoom})`;
+      const zoomPercent = Math.round(state.zoom * 100);
+      if (zoomPercent !== state.announcedZoomPercent) {
+        state.announcedZoomPercent = zoomPercent;
+        state.doneButton.setAttribute('aria-label', `Done zooming. Current zoom ${zoomPercent} percent`);
+      }
+    });
+  }
+
+  function setInlineImageZoomAtFocal(state, requestedZoom, center, focal) {
+    const nextZoom = clampImageLightboxValue(requestedZoom, INLINE_IMAGE_MIN_ZOOM, INLINE_IMAGE_MAX_ZOOM);
+    state.zoom = nextZoom;
+    state.panX = center.x - (focal.x * nextZoom);
+    state.panY = center.y - (focal.y * nextZoom);
+    clampInlineImagePan(state);
+    queueInlineImageTransform(state);
+  }
+
+  function positionInlineImageDoneButton(state) {
+    const frame = state?.frame;
+    if (!frame) return;
+    const top = clampImageLightboxValue(frame.rect.top + 10, 10, Math.max(10, window.innerHeight - 48));
+    const left = clampImageLightboxValue(frame.rect.right - 70, 10, Math.max(10, window.innerWidth - 78));
+    state.doneButton.style.setProperty('--press-inline-done-top', `${top}px`);
+    state.doneButton.style.setProperty('--press-inline-done-left', `${left}px`);
+  }
+
+  function finishInlineArticleImageZoom(state) {
+    if (!state || activeInlineArticleImageZoom !== state) return;
+    if (state.rafId) window.cancelAnimationFrame(state.rafId);
+    if (state.closeTimer) window.clearTimeout(state.closeTimer);
+    state.doneButton.remove();
+    state.viewport.classList.remove('press-inline-image-zoom', 'is-active', 'is-interacting');
+    state.image.classList.remove('press-inline-image-zoom__image');
+    state.image.style.removeProperty('transform');
+    state.image.style.removeProperty('will-change');
+    activeInlineArticleImageZoom = null;
+    articleImagePointers.forEach((pointer, pointerId) => {
+      if (pointer.image === state.image) articleImagePointers.delete(pointerId);
+    });
+    stopTrackingArticleImagePointers();
+  }
+
+  function closeInlineArticleImageZoom(options = {}) {
+    const { animate = true } = options;
+    const state = activeInlineArticleImageZoom;
+    if (!state || state.closing) return;
+    clearPendingInlineArticleImageTap();
+    state.pinch = null;
+    state.drag = null;
+    state.viewport.classList.remove('is-interacting');
+    if (!animate || state.zoom <= INLINE_IMAGE_MIN_ZOOM + INLINE_IMAGE_RESET_EPSILON) {
+      finishInlineArticleImageZoom(state);
+      return;
+    }
+    state.closing = true;
+    state.zoom = INLINE_IMAGE_MIN_ZOOM;
+    state.panX = 0;
+    state.panY = 0;
+    queueInlineImageTransform(state);
+    state.closeTimer = window.setTimeout(() => finishInlineArticleImageZoom(state), 170);
+  }
+
+  function createInlineArticleImageZoom(image) {
+    const viewport = image?.closest?.('figure');
+    const imageRect = image?.getBoundingClientRect?.();
+    const frame = measureInlineImageFrame(viewport);
+    if (!frame || !imageRect?.width || !imageRect?.height) return null;
+    if (activeInlineArticleImageZoom && activeInlineArticleImageZoom.image !== image) {
+      finishInlineArticleImageZoom(activeInlineArticleImageZoom);
+    }
+    if (activeInlineArticleImageZoom?.image === image) return activeInlineArticleImageZoom;
+
+    const doneButton = document.createElement('button');
+    doneButton.type = 'button';
+    doneButton.className = 'press-inline-image-zoom__done';
+    doneButton.textContent = 'Done';
+    document.body.appendChild(doneButton);
+
+    const state = {
+      image,
+      viewport,
+      frame,
+      doneButton,
+      imageWidth: imageRect.width,
+      imageHeight: imageRect.height,
+      zoom: INLINE_IMAGE_MIN_ZOOM,
+      panX: 0,
+      panY: 0,
+      pinch: null,
+      drag: null,
+      rafId: 0,
+      closeTimer: 0,
+      closing: false,
+      announcedZoomPercent: null,
+    };
+    activeInlineArticleImageZoom = state;
+    viewport.classList.add('press-inline-image-zoom', 'is-active');
+    image.classList.add('press-inline-image-zoom__image');
+    image.style.willChange = 'transform';
+    doneButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeInlineArticleImageZoom();
+    });
+    positionInlineImageDoneButton(state);
+    queueInlineImageTransform(state);
+    return state;
+  }
+
+  function openInlineArticleImageZoom(image, target, nextZoom = INLINE_IMAGE_DOUBLE_TAP_ZOOM) {
+    const state = createInlineArticleImageZoom(image);
+    if (!state || !target) return null;
+    const center = getInlineImageCenter(state, target.clientX, target.clientY);
+    if (!center) return state;
+    const focal = getInlineImageFocalPoint(state, center);
+    setInlineImageZoomAtFocal(state, nextZoom, center, focal);
+    return state;
+  }
+
+  function inlinePointerPointsForImage(image) {
+    return Array.from(articleImagePointers.values()).filter((pointer) => pointer.inline && pointer.image === image);
+  }
+
+  function startInlineArticleImagePinch(image) {
+    const points = inlinePointerPointsForImage(image);
+    const distance = getGestureDistance(points);
+    const pointerCenter = getGestureCenter(points);
+    const state = createInlineArticleImageZoom(image);
+    if (!state || !distance || !pointerCenter) return false;
+    const center = getInlineImageCenter(state, pointerCenter.clientX, pointerCenter.clientY);
+    if (!center) return false;
+    state.pinch = {
+      startDistance: distance,
+      startZoom: state.zoom,
+      focal: getInlineImageFocalPoint(state, center),
+    };
+    state.drag = null;
+    state.viewport.classList.add('is-interacting');
+    clearPendingInlineArticleImageTap();
+    return true;
+  }
+
+  function updateInlineArticleImagePinch(state) {
+    const points = inlinePointerPointsForImage(state.image);
+    const distance = getGestureDistance(points);
+    const pointerCenter = getGestureCenter(points);
+    if (!state.pinch || !distance || !pointerCenter || !state.pinch.startDistance) return false;
+    const center = getInlineImageCenter(state, pointerCenter.clientX, pointerCenter.clientY);
+    if (!center) return false;
+    const zoom = state.pinch.startZoom * (distance / state.pinch.startDistance);
+    setInlineImageZoomAtFocal(state, zoom, center, state.pinch.focal);
+    return true;
+  }
+
+  function handleInlineArticleImageTap(image, target, event) {
+    const now = Date.now();
+    event.preventDefault();
+    event.stopPropagation();
+    suppressArticleImageClickUntil = now + 700;
+
+    if (isMatchingInlineArticleImageDoubleTap(pendingInlineArticleImageTap, image, target, now)) {
+      clearPendingInlineArticleImageTap();
+      if (activeInlineArticleImageZoom?.image === image && activeInlineArticleImageZoom.zoom > INLINE_IMAGE_MIN_ZOOM) {
+        closeInlineArticleImageZoom();
+      } else {
+        openInlineArticleImageZoom(image, target, INLINE_IMAGE_DOUBLE_TAP_ZOOM);
+      }
+      return;
+    }
+
+    pendingInlineArticleImageTap = {
+      image,
+      at: now,
+      x: target.clientX,
+      y: target.clientY,
+    };
   }
 
   function getImageLightboxPanBounds(lightbox) {
@@ -592,46 +821,16 @@ if (document.readyState === 'loading') {
     updateImageLightboxTransform();
   }
 
-  function applyImageLightboxZoomTarget(lightbox, target, nextZoom) {
-    if (!lightbox || !target) return false;
-    const frameRect = lightbox.frame.getBoundingClientRect();
-    const renderedWidth = lightbox.image.offsetWidth;
-    const renderedHeight = lightbox.image.offsetHeight;
-    if (!frameRect.width || !frameRect.height || !renderedWidth || !renderedHeight) return false;
-
-    const zoom = clampImageLightboxValue(nextZoom, IMAGE_LIGHTBOX_MIN_ZOOM, getImageLightboxMaxZoom(lightbox));
-    const focalX = (clampImageLightboxValue(target.normalizedX, 0, 1) - 0.5) * renderedWidth;
-    const focalY = (clampImageLightboxValue(target.normalizedY, 0, 1) - 0.5) * renderedHeight;
-    const insetX = Math.min(90, frameRect.width * 0.18);
-    const insetY = Math.min(120, frameRect.height * 0.18);
-    const minX = frameRect.left + insetX;
-    const maxX = frameRect.right - insetX;
-    const minY = frameRect.top + insetY;
-    const maxY = frameRect.bottom - insetY;
-    const targetX = minX <= maxX
-      ? clampImageLightboxValue(target.clientX, minX, maxX)
-      : frameRect.left + frameRect.width / 2;
-    const targetY = minY <= maxY
-      ? clampImageLightboxValue(target.clientY, minY, maxY)
-      : frameRect.top + frameRect.height / 2;
-
-    lightbox.zoom = zoom;
-    lightbox.panX = targetX - (frameRect.left + frameRect.width / 2) - (focalX * zoom);
-    lightbox.panY = targetY - (frameRect.top + frameRect.height / 2) - (focalY * zoom);
-    updateImageLightboxTransform();
-    return true;
-  }
-
   function getImageLightboxGesturePoints(lightbox) {
     return Array.from(lightbox?.gesturePointers?.values?.() || []);
   }
 
-  function getImageLightboxGestureDistance(points) {
+  function getGestureDistance(points) {
     if (!points || points.length < 2) return 0;
     return Math.hypot(points[0].clientX - points[1].clientX, points[0].clientY - points[1].clientY);
   }
 
-  function getImageLightboxGestureCenter(points) {
+  function getGestureCenter(points) {
     if (!points || !points.length) return null;
     if (points.length === 1) return { clientX: points[0].clientX, clientY: points[0].clientY };
     return {
@@ -649,8 +848,8 @@ if (document.readyState === 'loading') {
 
   function startImageLightboxPinch(lightbox) {
     const points = getImageLightboxGesturePoints(lightbox);
-    const distance = getImageLightboxGestureDistance(points);
-    const center = getImageLightboxGestureCenter(points);
+    const distance = getGestureDistance(points);
+    const center = getGestureCenter(points);
     if (!distance || !center) return;
     lightbox.pinch = {
       startDistance: distance,
@@ -666,8 +865,8 @@ if (document.readyState === 'loading') {
     if (!lightbox?.pinch) return false;
     const points = getImageLightboxGesturePoints(lightbox);
     if (points.length < 2) return false;
-    const distance = getImageLightboxGestureDistance(points);
-    const center = getImageLightboxGestureCenter(points);
+    const distance = getGestureDistance(points);
+    const center = getGestureCenter(points);
     if (!distance || !center || !lightbox.pinch.startDistance) return false;
     const previousCenter = lightbox.pinch.center || center;
     if (lightbox.zoom > IMAGE_LIGHTBOX_MIN_ZOOM) {
@@ -684,12 +883,6 @@ if (document.readyState === 'loading') {
     if (!activeLightbox || event.pointerType === 'mouse') return;
     const lightbox = activeLightbox;
     if (lightbox.pinch || lightbox.didDrag || lightbox.gesturePointers?.size) return;
-    if (lightbox.zoom > IMAGE_LIGHTBOX_MIN_ZOOM && lightbox.tapToCloseWhenZoomed) {
-      event.preventDefault();
-      lightbox.suppressClickUntil = Date.now() + 420;
-      closeImageLightbox();
-      return;
-    }
     const now = Date.now();
     const previousTap = lightbox.lastTap;
     lightbox.lastTap = {
@@ -710,9 +903,9 @@ if (document.readyState === 'loading') {
     setImageLightboxZoom(lightbox.zoom > IMAGE_LIGHTBOX_MIN_ZOOM ? IMAGE_LIGHTBOX_MIN_ZOOM : 2.6, event);
   }
 
-  function captureImageLightboxPointer(frame, pointerId) {
+  function capturePointer(element, pointerId) {
     try {
-      frame?.setPointerCapture?.(pointerId);
+      element?.setPointerCapture?.(pointerId);
     } catch (_) {}
   }
 
@@ -735,7 +928,7 @@ if (document.readyState === 'loading') {
     updateImageLightboxTransform();
   }
 
-  function openImageLightbox(source, image, opener, event, options = {}) {
+  function openImageLightbox(source, image, opener, event) {
     if (!source || !image) return;
     event?.preventDefault();
 
@@ -823,22 +1016,11 @@ if (document.readyState === 'loading') {
       pinch: null,
       lastTap: null,
       suppressClickUntil: 0,
-      tapToCloseWhenZoomed: Boolean(options.tapToCloseWhenZoomed),
       historyPushed: false,
     };
     const openedLightbox = activeLightbox;
     const syncLoadedImageLayout = () => {
       if (activeLightbox !== openedLightbox) return;
-      if (
-        options.zoomTarget
-        && applyImageLightboxZoomTarget(
-          openedLightbox,
-          options.zoomTarget,
-          options.initialZoom || ARTICLE_IMAGE_DOUBLE_TAP_ZOOM,
-        )
-      ) {
-        return;
-      }
       updateImageLightboxTransform();
     };
 
@@ -870,7 +1052,7 @@ if (document.readyState === 'loading') {
           clientX: pointerEvent.clientX,
           clientY: pointerEvent.clientY,
         });
-        captureImageLightboxPointer(frame, pointerEvent.pointerId);
+        capturePointer(frame, pointerEvent.pointerId);
         if (activeLightbox.gesturePointers.size >= 2) {
           pointerEvent.preventDefault();
           startImageLightboxPinch(activeLightbox);
@@ -883,7 +1065,7 @@ if (document.readyState === 'loading') {
       activeLightbox.dragX = pointerEvent.clientX;
       activeLightbox.dragY = pointerEvent.clientY;
       activeLightbox.didDrag = false;
-      captureImageLightboxPointer(frame, pointerEvent.pointerId);
+      capturePointer(frame, pointerEvent.pointerId);
       fullImage.classList.add('is-dragging');
     });
     frame.addEventListener('pointermove', (pointerEvent) => {
@@ -924,8 +1106,8 @@ if (document.readyState === 'loading') {
       if (!activeLightbox || touchEvent.touches.length < 2) return;
       touchEvent.preventDefault();
       const points = getImageLightboxTouchPoints(touchEvent.touches);
-      const distance = getImageLightboxGestureDistance(points);
-      const center = getImageLightboxGestureCenter(points);
+      const distance = getGestureDistance(points);
+      const center = getGestureCenter(points);
       if (!distance || !center) return;
       activeLightbox.pinch = {
         startDistance: distance,
@@ -940,8 +1122,8 @@ if (document.readyState === 'loading') {
       if (!activeLightbox?.pinch || touchEvent.touches.length < 2) return;
       touchEvent.preventDefault();
       const points = getImageLightboxTouchPoints(touchEvent.touches);
-      const distance = getImageLightboxGestureDistance(points);
-      const center = getImageLightboxGestureCenter(points);
+      const distance = getGestureDistance(points);
+      const center = getGestureCenter(points);
       if (!distance || !center || !activeLightbox.pinch.startDistance) return;
       const previousCenter = activeLightbox.pinch.center || center;
       if (activeLightbox.zoom > IMAGE_LIGHTBOX_MIN_ZOOM) {
@@ -1009,9 +1191,15 @@ if (document.readyState === 'loading') {
     document.querySelectorAll(ARTICLE_IMAGE_SELECTOR).forEach((image) => {
       if (!shouldEnhanceArticleImage(image)) return;
       image.dataset.pressImageZoom = 'true';
+      if (image.matches(INLINE_ARTICLE_IMAGE_SELECTOR)) {
+        image.dataset.pressInlineImageZoom = 'true';
+      }
       image.setAttribute('role', 'button');
       image.setAttribute('tabindex', image.getAttribute('tabindex') || '0');
-      image.setAttribute('aria-label', image.alt ? `Open full-size image: ${image.alt}` : 'Open full-size image');
+      image.setAttribute(
+        'aria-label',
+        image.alt ? `Zoom image: ${image.alt}` : 'Zoom image',
+      );
     });
   }
 
@@ -1029,67 +1217,177 @@ if (document.readyState === 'loading') {
     }
   }
 
-  document.addEventListener('pointerdown', (event) => {
-    if (activeLightbox || event.pointerType === 'mouse' || event.isPrimary === false) return;
-    const image = getEnhancedArticleImageFromTarget(event.target);
-    if (!image) return;
-    articleImagePointerStarts.set(event.pointerId, {
-      image,
-      x: event.clientX,
-      y: event.clientY,
-    });
-  }, { capture: true, passive: true });
+  function handleArticleImagePointerMove(event) {
+    const pointer = articleImagePointers.get(event.pointerId);
+    if (!pointer || event.pointerType === 'mouse') return;
+    pointer.clientX = event.clientX;
+    pointer.clientY = event.clientY;
+    if (Math.hypot(pointer.clientX - pointer.startX, pointer.clientY - pointer.startY) > 4) pointer.moved = true;
+    const state = activeInlineArticleImageZoom;
+    if (!pointer.inline || !state || state.image !== pointer.image) return;
 
-  document.addEventListener('pointercancel', (event) => {
-    articleImagePointerStarts.delete(event.pointerId);
-  }, { capture: true, passive: true });
-
-  document.addEventListener('pointerup', (event) => {
-    if (activeLightbox || event.pointerType === 'mouse' || event.isPrimary === false) return;
-    const image = getEnhancedArticleImageFromTarget(event.target);
-    const start = articleImagePointerStarts.get(event.pointerId);
-    articleImagePointerStarts.delete(event.pointerId);
-    if (!image || start?.image !== image) return;
-    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12) return;
-
-    const target = getArticleImageTapTarget(image, event);
-    if (!target) return;
-
-    const now = Date.now();
-    event.preventDefault();
-    event.stopPropagation();
-    suppressArticleImageClickUntil = now + 650;
-
-    if (isMatchingArticleImageDoubleTap(pendingArticleImageTap, image, target, now)) {
-      clearPendingArticleImageTap();
-      openImageLightbox(getImageLightboxSource(image), image, image, event, {
-        initialZoom: ARTICLE_IMAGE_DOUBLE_TAP_ZOOM,
-        zoomTarget: target,
-        tapToCloseWhenZoomed: true,
-      });
+    if (state.pinch) {
+      event.preventDefault();
+      updateInlineArticleImagePinch(state);
       return;
     }
 
-    clearPendingArticleImageTap();
-    pendingArticleImageTap = {
+    if (state.drag?.pointerId !== event.pointerId || state.zoom <= INLINE_IMAGE_MIN_ZOOM) return;
+    event.preventDefault();
+    const deltaX = (event.clientX - state.drag.x) * INLINE_IMAGE_PAN_SENSITIVITY;
+    const deltaY = (event.clientY - state.drag.y) * INLINE_IMAGE_PAN_SENSITIVITY;
+    if (Math.hypot(deltaX, deltaY) > 2) state.drag.moved = true;
+    state.panX += deltaX;
+    state.panY += deltaY;
+    state.drag.x = event.clientX;
+    state.drag.y = event.clientY;
+    clampInlineImagePan(state);
+    queueInlineImageTransform(state);
+  }
+
+  function handleArticleImagePointerUp(event) {
+    finishInlineArticleImagePointer(event);
+  }
+
+  function handleArticleImagePointerCancel(event) {
+    finishInlineArticleImagePointer(event, true);
+  }
+
+  function startTrackingArticleImagePointers() {
+    if (articleImagePointerListenersInstalled) return;
+    articleImagePointerListenersInstalled = true;
+    document.addEventListener('pointermove', handleArticleImagePointerMove, { capture: true, passive: false });
+    document.addEventListener('pointerup', handleArticleImagePointerUp, { capture: true, passive: false });
+    document.addEventListener('pointercancel', handleArticleImagePointerCancel, { capture: true, passive: false });
+  }
+
+  function stopTrackingArticleImagePointers() {
+    if (!articleImagePointerListenersInstalled || articleImagePointers.size) return;
+    articleImagePointerListenersInstalled = false;
+    document.removeEventListener('pointermove', handleArticleImagePointerMove, true);
+    document.removeEventListener('pointerup', handleArticleImagePointerUp, true);
+    document.removeEventListener('pointercancel', handleArticleImagePointerCancel, true);
+  }
+
+  document.addEventListener('pointerdown', (event) => {
+    if (activeLightbox || event.pointerType === 'mouse') return;
+    if (activeInlineArticleImageZoom?.doneButton === event.target) return;
+
+    const inlineImage = getInlineArticleImageFromTarget(event.target);
+    const image = inlineImage || getEnhancedArticleImageFromTarget(event.target);
+    if (!image) {
+      if (activeInlineArticleImageZoom) closeInlineArticleImageZoom();
+      return;
+    }
+    if (activeInlineArticleImageZoom && activeInlineArticleImageZoom.image !== image) {
+      closeInlineArticleImageZoom({ animate: false });
+    }
+    if (!inlineImage) return;
+
+    articleImagePointers.set(event.pointerId, {
+      pointerId: event.pointerId,
       image,
-      at: now,
-      x: target.clientX,
-      y: target.clientY,
-      timeoutId: window.setTimeout(() => {
-        pendingArticleImageTap = null;
-        openImageLightbox(getImageLightboxSource(image), image, image, {
-          clientX: target.clientX,
-          clientY: target.clientY,
-          pointerType: event.pointerType,
-          preventDefault() {},
-        });
-      }, ARTICLE_IMAGE_DOUBLE_TAP_DELAY),
-    };
-  }, { capture: true });
+      inline: true,
+      startX: event.clientX,
+      startY: event.clientY,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      moved: false,
+    });
+    startTrackingArticleImagePointers();
+    suppressArticleImageClickUntil = Date.now() + 700;
+
+    const points = inlinePointerPointsForImage(inlineImage);
+    if (points.length >= 2) {
+      event.preventDefault();
+      if (startInlineArticleImagePinch(inlineImage)) {
+        capturePointer(event.target, event.pointerId);
+      }
+      return;
+    }
+
+    if (activeInlineArticleImageZoom?.image === inlineImage && activeInlineArticleImageZoom.zoom > INLINE_IMAGE_MIN_ZOOM) {
+      event.preventDefault();
+      activeInlineArticleImageZoom.drag = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        moved: false,
+      };
+      activeInlineArticleImageZoom.viewport.classList.add('is-interacting');
+      capturePointer(event.target, event.pointerId);
+    }
+  }, { capture: true, passive: false });
+
+  function finishInlineArticleImagePointer(event, cancelled = false) {
+    const pointer = articleImagePointers.get(event.pointerId);
+    if (!pointer || event.pointerType === 'mouse') return;
+    pointer.clientX = event.clientX;
+    pointer.clientY = event.clientY;
+    if (Math.hypot(pointer.clientX - pointer.startX, pointer.clientY - pointer.startY) > 12) pointer.moved = true;
+    const state = activeInlineArticleImageZoom;
+    const wasPinching = Boolean(pointer.inline && state?.image === pointer.image && state.pinch);
+    const wasDragging = Boolean(pointer.inline && state?.drag?.pointerId === event.pointerId);
+    const dragMoved = Boolean(wasDragging && state.drag.moved);
+    articleImagePointers.delete(event.pointerId);
+    stopTrackingArticleImagePointers();
+    suppressArticleImageClickUntil = Date.now() + 700;
+
+    if (!pointer.inline || cancelled) {
+      if (wasPinching && state) {
+        state.pinch = null;
+        state.viewport.classList.remove('is-interacting');
+      }
+      if (wasDragging && state) {
+        state.drag = null;
+        state.viewport.classList.remove('is-interacting');
+      }
+      return;
+    }
+
+    if (wasPinching && state) {
+      const remaining = inlinePointerPointsForImage(pointer.image);
+      if (remaining.length < 2) {
+        state.pinch = null;
+        state.viewport.classList.remove('is-interacting');
+        if (state.zoom <= INLINE_IMAGE_MIN_ZOOM + INLINE_IMAGE_RESET_EPSILON) {
+          closeInlineArticleImageZoom({ animate: false });
+        } else if (remaining.length === 1) {
+          state.drag = {
+            pointerId: remaining[0].pointerId,
+            x: remaining[0].clientX,
+            y: remaining[0].clientY,
+            moved: true,
+          };
+          state.viewport.classList.add('is-interacting');
+        }
+      }
+      return;
+    }
+
+    if (wasDragging && state) {
+      state.drag = null;
+      state.viewport.classList.remove('is-interacting');
+      if (dragMoved || pointer.moved) return;
+    }
+    if (pointer.moved) return;
+
+    handleInlineArticleImageTap(
+      pointer.image,
+      { clientX: event.clientX, clientY: event.clientY },
+      event,
+    );
+  }
+
+  function shouldUseTouchImageBehavior() {
+    return Boolean(
+      navigator.maxTouchPoints > 0
+      && window.matchMedia?.('(hover: none), (pointer: coarse)')?.matches,
+    );
+  }
 
   document.addEventListener('click', (event) => {
-    if (Date.now() < suppressArticleImageClickUntil && getEnhancedArticleImageFromTarget(event.target)) {
+    if (Date.now() < suppressArticleImageClickUntil && getInlineArticleImageFromTarget(event.target)) {
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -1103,10 +1401,25 @@ if (document.readyState === 'loading') {
 
     const image = event.target.closest?.(ARTICLE_IMAGE_SELECTOR);
     if (!image || image.dataset.pressImageZoom !== 'true') return;
+    if (shouldUseTouchImageBehavior() && image.dataset.pressInlineImageZoom === 'true') {
+      event.preventDefault();
+      event.stopPropagation();
+      const rect = image.getBoundingClientRect();
+      openInlineArticleImageZoom(image, {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+      });
+      return;
+    }
     openImageLightbox(getImageLightboxSource(image), image, image, event);
   });
 
   document.addEventListener('keydown', (event) => {
+    if (activeInlineArticleImageZoom && event.key === 'Escape') {
+      event.preventDefault();
+      closeInlineArticleImageZoom();
+      return;
+    }
     if (!activeLightbox) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       const image = event.target?.matches?.(ARTICLE_IMAGE_SELECTOR) ? event.target : null;
@@ -1156,7 +1469,14 @@ if (document.readyState === 'loading') {
     }
   });
 
-  window.addEventListener('resize', () => updateImageLightboxTransform());
+  window.addEventListener('resize', () => {
+    updateImageLightboxTransform();
+    if (activeInlineArticleImageZoom) closeInlineArticleImageZoom({ animate: false });
+  });
+
+  window.addEventListener('scroll', () => {
+    if (activeInlineArticleImageZoom) closeInlineArticleImageZoom({ animate: false });
+  }, { passive: true });
 
   window.addEventListener('popstate', () => {
     if (activeLightbox) closeImageLightbox({ restoreHistory: false });

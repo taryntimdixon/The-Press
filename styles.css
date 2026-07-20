@@ -10135,6 +10135,69 @@ body.page-article:has(.press-social-feature)::before{
   cursor:zoom-in;
 }
 
+[data-press-inline-image-zoom="true"]{
+  cursor:zoom-in;
+  touch-action:pan-y;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+.press-inline-image-zoom.is-active{
+  position:relative;
+  overflow:hidden !important;
+  contain:paint;
+  isolation:isolate;
+  touch-action:none;
+}
+
+.press-inline-image-zoom.is-active > .press-inline-image-zoom__image{
+  position:relative;
+  z-index:1;
+  transform-origin:center center;
+  transition:transform .14s cubic-bezier(.2,.78,.22,1);
+  cursor:grab;
+  touch-action:none;
+  -webkit-user-drag:none;
+}
+
+.press-inline-image-zoom.is-active.is-interacting > .press-inline-image-zoom__image{
+  transition:none;
+  cursor:grabbing;
+}
+
+.press-inline-image-zoom__done{
+  position:fixed;
+  top:var(--press-inline-done-top, .65rem);
+  left:var(--press-inline-done-left, .65rem);
+  z-index:12001;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:3.6rem;
+  min-height:2.45rem;
+  border:1px solid rgba(255,255,255,.76);
+  border-radius:999px;
+  padding:.5rem .75rem;
+  background:rgba(15,14,13,.78);
+  color:#fff;
+  font:800 .72rem/1 "Space Mono", monospace;
+  letter-spacing:.03em;
+  box-shadow:0 7px 22px rgba(0,0,0,.32);
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+  cursor:pointer;
+}
+
+.press-inline-image-zoom__done:hover,
+.press-inline-image-zoom__done:focus-visible{
+  border-color:#fff;
+  background:#fff;
+  color:#171411;
+  outline:3px solid rgba(123,32,25,.72);
+  outline-offset:2px;
+}
+
 .press-image-lightbox{
   position:fixed;
   inset:0;
