@@ -1267,6 +1267,10 @@ body.page-home :focus-visible {
     min-height: 32rem;
   }
 
+  body.page-home .lead-panel__media img {
+    object-position: center top;
+  }
+
   body.page-home .lead-panel.is-active::before {
     top: 0.65rem;
     left: 0.65rem;

@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 APP_PATH = ROOT / "app.js"
 STYLES_PATH = ROOT / "styles.css"
 HOMEPAGE_STYLES_PATH = ROOT / "homepage.css"
+HOMEPAGE_SCRIPT_PATH = ROOT / "homepage.js"
 RUNTIME_TEST_PATH = ROOT / "tools" / "test_mobile_reading_experience_runtime.js"
 
 
@@ -29,46 +30,49 @@ def test_inline_zoom_targets_full_page_art_only():
     assert ".ny-love-letter-feature .ny-love-newspaper-sheet > img" in app
     assert ".press-image-edition .press-image-edition__sheet > img" in app
     assert "image.dataset.pressInlineImageZoom = 'true'" in app
-    print("✓ NYC and image-edition sheets opt into mobile inline zoom")
+    print("✓ NYC and image-edition sheets are identified for mobile page zoom")
 
 
-def test_touch_taps_stay_inline_and_single_tap_is_a_noop():
+def test_illustrated_editions_delegate_touch_zoom_to_the_browser():
     app = source(APP_PATH)
-    handler = re.search(
-        r"function handleInlineArticleImageTap\(.*?\n  }\n",
+    styles = source(STYLES_PATH)
+    pointer_handler = re.search(
+        r"document\.addEventListener\('pointerdown', \(event\) => \{(?P<body>.*?)\n  }, \{ capture: true, passive: true \}\);",
         app,
         flags=re.DOTALL,
     )
+    touch_handler = re.search(
+        r"document\.addEventListener\('touchstart', \(event\) => \{(?P<body>.*?)\n  }, \{ capture: true, passive: true \}\);",
+        app,
+        flags=re.DOTALL,
+    )
+    click_classifier = re.search(
+        r"function isTouchGeneratedInlineArticleImageClick\(image, event\) \{(?P<body>.*?)\n  }",
+        app,
+        flags=re.DOTALL,
+    )
+    touch_rule = re.search(
+        r'\[data-press-inline-image-zoom="true"\]\s*\{(?P<body>.*?)\n\}',
+        styles,
+        flags=re.DOTALL,
+    )
 
-    assert handler, "Missing inline article image tap handler"
-    assert "openInlineArticleImageZoom" in handler.group(0)
-    assert "openImageLightbox" not in handler.group(0)
-    assert "setTimeout" not in handler.group(0)
-    assert "closeInlineArticleImageZoom" in handler.group(0)
-    print("✓ Touch double-tap zooms/resets inline without a delayed modal open")
-
-
-def test_inline_zoom_uses_exact_focal_math_and_eight_x_range():
-    app = source(APP_PATH)
-
-    assert "INLINE_IMAGE_MAX_ZOOM = 8" in app
-    assert "(center.x - state.panX) / state.zoom" in app
-    assert "(center.y - state.panY) / state.zoom" in app
-    assert "state.panX = center.x - (focal.x * nextZoom)" in app
-    assert "state.panY = center.y - (focal.y * nextZoom)" in app
-    assert "INLINE_IMAGE_PAN_SENSITIVITY" in app
-    print("✓ Inline zoom preserves the touched focal point and permits up to 8x zoom")
-
-
-def test_inline_zoom_css_preserves_scroll_until_active():
-    styles = source(STYLES_PATH)
-
-    assert '[data-press-inline-image-zoom="true"]' in styles
-    assert "touch-action:pan-y" in styles
-    assert ".press-inline-image-zoom.is-active" in styles
-    assert "touch-action:none" in styles
-    assert ".press-inline-image-zoom__done" in styles
-    print("✓ Mobile sheets scroll normally until their inline zoom is active")
+    assert pointer_handler, "Missing passive illustrated-edition pointer handoff"
+    assert "preventDefault" not in pointer_handler.group("body")
+    assert "rememberInlineArticleImageTouch" in pointer_handler.group("body")
+    assert touch_handler, "Missing passive touchstart fallback"
+    assert "rememberInlineArticleImageTouch" in touch_handler.group("body")
+    assert "preventDefault" not in touch_handler.group("body")
+    assert click_classifier, "Missing touch-generated click classifier"
+    assert "event.pointerType === 'touch'" in click_classifier.group("body")
+    assert "event.sourceCapabilities?.firesTouchEvents" in click_classifier.group("body")
+    assert "event.detail" not in click_classifier.group("body")
+    assert "shouldUseTouchImageBehavior" not in click_classifier.group("body")
+    assert "preventDefault" not in click_classifier.group("body")
+    assert "&& isTouchGeneratedInlineArticleImageClick(image, event)" in app
+    assert touch_rule, "Missing illustrated-edition touch-action rule"
+    assert "touch-action:auto" in touch_rule.group("body")
+    print("✓ Illustrated editions leave pinch and double-tap zoom to the phone browser")
 
 
 def test_mobile_homepage_uses_one_scrim_not_two():
@@ -84,7 +88,26 @@ def test_mobile_homepage_uses_one_scrim_not_two():
     assert body_rule, "Missing mobile lead-panel body rule"
     assert "background: transparent" in body_rule.group("body")
     assert "rgba(18, 17, 15, 0.94)" not in body_rule.group("body")
-    print("✓ Mobile homepage no longer stacks a second dark scrim over hero art")
+    image_rule = re.search(
+        r"body\.page-home \.lead-panel__media img \{(?P<body>.*?)\n  }",
+        mobile.group("body"),
+        flags=re.DOTALL,
+    )
+    assert image_rule, "Missing mobile hero-image alignment rule"
+    assert "object-position: center top" in image_rule.group("body")
+    print("✓ Mobile heroes keep one scrim and start full artwork at the top edge")
+
+
+def test_below_fold_is_not_hidden_by_a_whole_section_reveal():
+    script = source(HOMEPAGE_SCRIPT_PATH)
+    reveal_selector = re.search(
+        r"const revealTargets = Array\.from\(document\.querySelectorAll\(\s*\"(?P<selector>[^\"]+)\"",
+        script,
+    )
+
+    assert reveal_selector, "Missing homepage reveal target selector"
+    assert ".below-fold-flipper" not in reveal_selector.group("selector")
+    print("✓ Below the Fold cannot become a full-height invisible mobile section")
 
 
 def find_node() -> str:
@@ -121,12 +144,11 @@ def test_mobile_interactions_in_browser():
 def main():
     print("Running mobile reading experience checks...\n")
     test_inline_zoom_targets_full_page_art_only()
-    test_touch_taps_stay_inline_and_single_tap_is_a_noop()
-    test_inline_zoom_uses_exact_focal_math_and_eight_x_range()
-    test_inline_zoom_css_preserves_scroll_until_active()
+    test_illustrated_editions_delegate_touch_zoom_to_the_browser()
     test_mobile_homepage_uses_one_scrim_not_two()
+    test_below_fold_is_not_hidden_by_a_whole_section_reveal()
     test_mobile_interactions_in_browser()
-    print("\n✅ All 6 mobile reading experience checks passed!")
+    print("\n✅ All 5 mobile reading experience checks passed!")
 
 
 if __name__ == "__main__":

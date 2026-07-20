@@ -10137,7 +10137,7 @@ body.page-article:has(.press-social-feature)::before{
 
 [data-press-inline-image-zoom="true"]{
   cursor:zoom-in;
-  touch-action:pan-y;
+  touch-action:auto;
   -webkit-tap-highlight-color:transparent;
   -webkit-user-select:none;
   user-select:none;

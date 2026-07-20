@@ -495,6 +495,7 @@ if (document.readyState === 'loading') {
   let activeInlineArticleImageZoom = null;
   let pendingInlineArticleImageTap = null;
   let suppressArticleImageClickUntil = 0;
+  let recentInlineArticleImageTouch = null;
   const articleImagePointers = new Map();
   let articleImagePointerListenersInstalled = false;
 
@@ -523,6 +524,14 @@ if (document.readyState === 'loading') {
     const image = target?.closest?.(INLINE_ARTICLE_IMAGE_SELECTOR);
     if (!image || image.dataset.pressInlineImageZoom !== 'true') return null;
     return image;
+  }
+
+  function rememberInlineArticleImageTouch(image) {
+    if (!image) return;
+    recentInlineArticleImageTouch = {
+      image,
+      expiresAt: Date.now() + 700,
+    };
   }
 
   function isMatchingInlineArticleImageDoubleTap(previousTap, image, target, now) {
@@ -1270,54 +1279,17 @@ if (document.readyState === 'loading') {
   }
 
   document.addEventListener('pointerdown', (event) => {
-    if (activeLightbox || event.pointerType === 'mouse') return;
-    if (activeInlineArticleImageZoom?.doneButton === event.target) return;
-
-    const inlineImage = getInlineArticleImageFromTarget(event.target);
-    const image = inlineImage || getEnhancedArticleImageFromTarget(event.target);
-    if (!image) {
-      if (activeInlineArticleImageZoom) closeInlineArticleImageZoom();
+    if (event.pointerType === 'mouse') {
+      recentInlineArticleImageTouch = null;
       return;
     }
-    if (activeInlineArticleImageZoom && activeInlineArticleImageZoom.image !== image) {
-      closeInlineArticleImageZoom({ animate: false });
-    }
-    if (!inlineImage) return;
+    const image = getInlineArticleImageFromTarget(event.target);
+    rememberInlineArticleImageTouch(image);
+  }, { capture: true, passive: true });
 
-    articleImagePointers.set(event.pointerId, {
-      pointerId: event.pointerId,
-      image,
-      inline: true,
-      startX: event.clientX,
-      startY: event.clientY,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      moved: false,
-    });
-    startTrackingArticleImagePointers();
-    suppressArticleImageClickUntil = Date.now() + 700;
-
-    const points = inlinePointerPointsForImage(inlineImage);
-    if (points.length >= 2) {
-      event.preventDefault();
-      if (startInlineArticleImagePinch(inlineImage)) {
-        capturePointer(event.target, event.pointerId);
-      }
-      return;
-    }
-
-    if (activeInlineArticleImageZoom?.image === inlineImage && activeInlineArticleImageZoom.zoom > INLINE_IMAGE_MIN_ZOOM) {
-      event.preventDefault();
-      activeInlineArticleImageZoom.drag = {
-        pointerId: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        moved: false,
-      };
-      activeInlineArticleImageZoom.viewport.classList.add('is-interacting');
-      capturePointer(event.target, event.pointerId);
-    }
-  }, { capture: true, passive: false });
+  document.addEventListener('touchstart', (event) => {
+    rememberInlineArticleImageTouch(getInlineArticleImageFromTarget(event.target));
+  }, { capture: true, passive: true });
 
   function finishInlineArticleImagePointer(event, cancelled = false) {
     const pointer = articleImagePointers.get(event.pointerId);
@@ -1379,20 +1351,21 @@ if (document.readyState === 'loading') {
     );
   }
 
-  function shouldUseTouchImageBehavior() {
+  function isTouchGeneratedInlineArticleImageClick(image, event) {
+    const recentTouch = recentInlineArticleImageTouch;
+    const matchesRecentTouch = Boolean(
+      recentTouch
+      && recentTouch.image === image
+      && Date.now() < recentTouch.expiresAt,
+    );
     return Boolean(
-      navigator.maxTouchPoints > 0
-      && window.matchMedia?.('(hover: none), (pointer: coarse)')?.matches,
+      matchesRecentTouch
+      || event.pointerType === 'touch'
+      || event.sourceCapabilities?.firesTouchEvents
     );
   }
 
   document.addEventListener('click', (event) => {
-    if (Date.now() < suppressArticleImageClickUntil && getInlineArticleImageFromTarget(event.target)) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
     const link = event.target.closest?.(IMAGE_LINK_SELECTOR);
     if (link) {
       openLinkedImageLightbox(link, event);
@@ -1401,25 +1374,18 @@ if (document.readyState === 'loading') {
 
     const image = event.target.closest?.(ARTICLE_IMAGE_SELECTOR);
     if (!image || image.dataset.pressImageZoom !== 'true') return;
-    if (shouldUseTouchImageBehavior() && image.dataset.pressInlineImageZoom === 'true') {
-      event.preventDefault();
-      event.stopPropagation();
-      const rect = image.getBoundingClientRect();
-      openInlineArticleImageZoom(image, {
-        clientX: rect.left + rect.width / 2,
-        clientY: rect.top + rect.height / 2,
-      });
+    if (
+      image.dataset.pressInlineImageZoom === 'true'
+      && isTouchGeneratedInlineArticleImageClick(image, event)
+    ) {
+      recentInlineArticleImageTouch = null;
       return;
     }
+    recentInlineArticleImageTouch = null;
     openImageLightbox(getImageLightboxSource(image), image, image, event);
   });
 
   document.addEventListener('keydown', (event) => {
-    if (activeInlineArticleImageZoom && event.key === 'Escape') {
-      event.preventDefault();
-      closeInlineArticleImageZoom();
-      return;
-    }
     if (!activeLightbox) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       const image = event.target?.matches?.(ARTICLE_IMAGE_SELECTOR) ? event.target : null;
@@ -1471,12 +1437,7 @@ if (document.readyState === 'loading') {
 
   window.addEventListener('resize', () => {
     updateImageLightboxTransform();
-    if (activeInlineArticleImageZoom) closeInlineArticleImageZoom({ animate: false });
   });
-
-  window.addEventListener('scroll', () => {
-    if (activeInlineArticleImageZoom) closeInlineArticleImageZoom({ animate: false });
-  }, { passive: true });
 
   window.addEventListener('popstate', () => {
     if (activeLightbox) closeImageLightbox({ restoreHistory: false });

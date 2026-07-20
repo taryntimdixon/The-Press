@@ -70,7 +70,7 @@
   }
 
   const revealTargets = Array.from(document.querySelectorAll(
-    ".home-recency-section, .on-this-day, .below-fold-flipper, .home-cartoons"
+    ".home-recency-section, .on-this-day, .home-cartoons"
   ));
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
