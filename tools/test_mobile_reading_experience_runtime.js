@@ -208,7 +208,7 @@ async function testStandardTouchImageKeepsLightbox(browser, origin) {
   console.log('✓ Runtime: ordinary touch images still open the lightbox/history path');
 }
 
-async function assertIllustratedEditionDelegatesTouchGestures(
+async function assertIllustratedEditionSupportsHybridZoom(
   page,
   selector,
   expectedCount,
@@ -228,17 +228,25 @@ async function assertIllustratedEditionDelegatesTouchGestures(
   assert(viewportAllowsZoom, `${label} disables browser viewport zoom`);
 
   await page.touchscreen.tap(point.x, point.y);
-  await page.waitForTimeout(35);
+  await page.waitForTimeout(45);
+  const afterSingleTap = await readInlineState(page, selector, index);
+  assert(afterSingleTap.touchAction === 'auto', `${label} uses ${afterSingleTap.touchAction} instead of native touch gestures at rest`);
+  assert(!afterSingleTap.active, `${label} single tap unexpectedly activated zoom`);
+  assert(afterSingleTap.lightboxes === 0, `${label} single tap opened a modal lightbox`);
+
   await page.touchscreen.tap(point.x, point.y);
   await page.waitForTimeout(100);
 
   const afterDoubleTap = await readInlineState(page, selector, index);
-  assert(afterDoubleTap.touchAction === 'auto', `${label} uses ${afterDoubleTap.touchAction} instead of native touch gestures`);
-  assert(!afterDoubleTap.active, `${label} double tap activated a per-image zoom frame`);
-  assert(afterDoubleTap.transform === '', `${label} double tap transformed only the selected sheet`);
-  assert(afterDoubleTap.doneButtons === 0, `${label} double tap exposed a custom Done control`);
+  assert(afterDoubleTap.touchAction === 'none', `${label} did not enable direct manipulation after inline zoom opened`);
+  assert(afterDoubleTap.active, `${label} double tap did not activate inline zoom`);
+  assert(afterDoubleTap.transform !== '', `${label} double tap did not magnify the selected sheet`);
+  assert(afterDoubleTap.doneButtons === 1, `${label} double tap did not expose the inline Done control`);
   assert(afterDoubleTap.lightboxes === 0, `${label} double tap opened a modal lightbox`);
   assert(afterDoubleTap.historyLength === historyBefore && !afterDoubleTap.historyMarked, `${label} double tap changed browser history`);
+
+  await page.locator('.press-inline-image-zoom__done').click();
+  await page.waitForFunction(() => !document.querySelector('.press-inline-image-zoom.is-active'));
 
   const firstX = point.x - 20;
   const secondX = point.x + 20;
@@ -262,7 +270,7 @@ async function assertIllustratedEditionDelegatesTouchGestures(
     return [images[activeIndex - 1], images[activeIndex], images[activeIndex + 1]]
       .map((item) => item?.style.transform || '');
   }, index);
-  assert(!afterPinch.active && afterPinch.transform === '', `${label} pinch transformed only the selected sheet`);
+  assert(!afterPinch.active && afterPinch.transform === '', `${label} native pinch fallback transformed only the selected sheet`);
   assert(neighborTransforms.every((transform) => transform === ''), `${label} left neighboring sheets in a different transform context`);
   assert(afterPinch.doneButtons === 0 && afterPinch.lightboxes === 0, `${label} pinch created custom zoom UI`);
   assert(afterPinch.historyLength === historyBefore, `${label} pinch changed browser history`);
@@ -289,20 +297,20 @@ async function assertIllustratedEditionDelegatesTouchGestures(
   }
 }
 
-async function testBothIllustratedEditionsDelegateTouchGestures(browser, origin) {
+async function testBothIllustratedEditionsSupportHybridZoom(browser, origin) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     hasTouch: true,
     isMobile: true,
   });
   const nycPage = await openArticle(context, origin);
-  await assertIllustratedEditionDelegatesTouchGestures(nycPage, INLINE_SELECTOR, 34, 'NYC', true);
+  await assertIllustratedEditionSupportsHybridZoom(nycPage, INLINE_SELECTOR, 34, 'NYC', true);
   await nycPage.close();
 
   const mobPage = await openArticle(context, origin, MOB_ARTICLE_PATH, MOB_INLINE_SELECTOR);
-  await assertIllustratedEditionDelegatesTouchGestures(mobPage, MOB_INLINE_SELECTOR, 31, 'Mob Ties', true);
+  await assertIllustratedEditionSupportsHybridZoom(mobPage, MOB_INLINE_SELECTOR, 31, 'Mob Ties', true);
   await context.close();
-  console.log('✓ Runtime: NYC and Mob Ties reach 2x native viewport zoom without per-sheet transforms');
+  console.log('✓ Runtime: NYC and Mob Ties support inline double-tap plus 2x native viewport pinch');
 }
 
 async function testHybridTouchDeviceAlsoDelegatesTouchGestures(browser, origin) {
@@ -332,9 +340,9 @@ async function testHybridTouchDeviceAlsoDelegatesTouchGestures(browser, origin) 
     () => window.matchMedia('(hover: none), (pointer: coarse)').matches,
   );
   assert(!reportsCoarsePointer, 'Hybrid touch fixture did not expose a fine primary pointer');
-  await assertIllustratedEditionDelegatesTouchGestures(page, INLINE_SELECTOR, 34, 'Hybrid-touch NYC');
+  await assertIllustratedEditionSupportsHybridZoom(page, INLINE_SELECTOR, 34, 'Hybrid-touch NYC');
   await context.close();
-  console.log('✓ Runtime: hybrid touch devices cannot fall back to one-sheet custom zoom');
+  console.log('✓ Runtime: hybrid touch devices keep inline double-tap and native pinch behavior');
 }
 
 async function testKeyboardAndMouseKeepAccessibleLightbox(browser, origin) {
@@ -509,7 +517,7 @@ async function main() {
       headless: true,
     });
     await testStandardTouchImageKeepsLightbox(browser, server.origin);
-    await testBothIllustratedEditionsDelegateTouchGestures(browser, server.origin);
+    await testBothIllustratedEditionsSupportHybridZoom(browser, server.origin);
     await testHybridTouchDeviceAlsoDelegatesTouchGestures(browser, server.origin);
     await testKeyboardAndMouseKeepAccessibleLightbox(browser, server.origin);
     await testAllMobileHomepageHeroesKeepOneScrimAndTopAlignedArt(browser, server.origin);

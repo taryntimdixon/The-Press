@@ -33,11 +33,11 @@ def test_inline_zoom_targets_full_page_art_only():
     print("✓ NYC and image-edition sheets are identified for mobile page zoom")
 
 
-def test_illustrated_editions_delegate_touch_zoom_to_the_browser():
+def test_illustrated_editions_keep_native_pinch_and_restore_inline_double_tap():
     app = source(APP_PATH)
     styles = source(STYLES_PATH)
     pointer_handler = re.search(
-        r"document\.addEventListener\('pointerdown', \(event\) => \{(?P<body>.*?)\n  }, \{ capture: true, passive: true \}\);",
+        r"document\.addEventListener\('pointerdown', \(event\) => \{(?P<body>.*?)\n  }, \{ capture: true, passive: false \}\);",
         app,
         flags=re.DOTALL,
     )
@@ -57,8 +57,12 @@ def test_illustrated_editions_delegate_touch_zoom_to_the_browser():
         flags=re.DOTALL,
     )
 
-    assert pointer_handler, "Missing passive illustrated-edition pointer handoff"
-    assert "preventDefault" not in pointer_handler.group("body")
+    assert pointer_handler, "Missing illustrated-edition pointer handler"
+    assert "articleImagePointers.set" in pointer_handler.group("body")
+    assert "points.length >= 2" in pointer_handler.group("body")
+    assert "state?.image === image" in pointer_handler.group("body")
+    assert "handleInlineArticleImageTap" in app
+    assert "openInlineArticleImageZoom" in app
     assert "rememberInlineArticleImageTouch" in pointer_handler.group("body")
     assert touch_handler, "Missing passive touchstart fallback"
     assert "rememberInlineArticleImageTouch" in touch_handler.group("body")
@@ -72,7 +76,7 @@ def test_illustrated_editions_delegate_touch_zoom_to_the_browser():
     assert "&& isTouchGeneratedInlineArticleImageClick(image, event)" in app
     assert touch_rule, "Missing illustrated-edition touch-action rule"
     assert "touch-action:auto" in touch_rule.group("body")
-    print("✓ Illustrated editions leave pinch and double-tap zoom to the phone browser")
+    print("✓ Illustrated editions keep native pinch at rest and guarantee inline double-tap zoom")
 
 
 def test_mobile_homepage_uses_one_scrim_not_two():
@@ -144,7 +148,7 @@ def test_mobile_interactions_in_browser():
 def main():
     print("Running mobile reading experience checks...\n")
     test_inline_zoom_targets_full_page_art_only()
-    test_illustrated_editions_delegate_touch_zoom_to_the_browser()
+    test_illustrated_editions_keep_native_pinch_and_restore_inline_double_tap()
     test_mobile_homepage_uses_one_scrim_not_two()
     test_below_fold_is_not_hidden_by_a_whole_section_reveal()
     test_mobile_interactions_in_browser()
