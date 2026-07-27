@@ -55,6 +55,7 @@ except OSError:
   APP_VERSION = "1"
 
 PRESS_FONT_HREF = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=Space+Mono:wght@400;700&display=swap"
+GOOGLE_ANALYTICS_MEASUREMENT_ID = "G-X5EDHVX4K0"
 
 
 def asset_version(rel_path: str) -> str:
@@ -2745,6 +2746,14 @@ def page_head(
     return f"""
 <head>
   <meta charset="utf-8" />
+  <!-- Google Analytics: emitted by the shared page head so every generated page is measured once. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id={h(GOOGLE_ANALYTICS_MEASUREMENT_ID)}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+    gtag('config', '{h(GOOGLE_ANALYTICS_MEASUREMENT_ID)}');
+  </script>
   <title>{h(title)}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="{h(description)}" />
