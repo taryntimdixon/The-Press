@@ -241,6 +241,74 @@ body.page-home .page {
   padding: 0.8rem 0 4rem;
 }
 
+body.page-home .home-section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 26;
+  width: min(calc(100% - 2rem), 88rem);
+  margin: 0 auto 0.8rem;
+  border: 1px solid var(--tm-ink);
+  border-left: 7px solid var(--tm-signal);
+  background: rgba(255, 250, 240, 0.97);
+  box-shadow: 6px 6px 0 rgba(18, 17, 15, 0.14);
+  backdrop-filter: blur(12px);
+}
+
+body.page-home .home-section-nav__links {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+
+body.page-home .home-section-nav a {
+  position: relative;
+  display: inline-flex;
+  min-height: 2.8rem;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0.72rem clamp(0.82rem, 1.8vw, 1.35rem);
+  border-right: 1px solid rgba(18, 17, 15, 0.18);
+  color: var(--tm-ink);
+  font: 700 0.61rem/1 var(--tm-code);
+  letter-spacing: 0.09em;
+  scroll-snap-align: start;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+body.page-home .home-section-nav a:last-child {
+  border-right: 0;
+}
+
+body.page-home .home-section-nav a:hover,
+body.page-home .home-section-nav a:focus-visible,
+body.page-home .home-section-nav a[aria-current="location"] {
+  background: var(--tm-ink);
+  color: var(--tm-paper-bright);
+  text-decoration: none;
+}
+
+body.page-home .home-section-nav a[aria-current="location"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: var(--tm-signal);
+}
+
+body.page-home #front-page,
+body.page-home #more-from-edition,
+body.page-home #on-this-day,
+body.page-home #below-the-fold,
+body.page-home #fantasy {
+  scroll-margin-top: 4rem;
+}
+
 body.page-home .home-hero,
 body.page-home .home-grid {
   width: min(calc(100% - 2rem), 88rem);
@@ -972,78 +1040,261 @@ body.page-home .below-fold-flipper__turn {
   box-shadow: 5px 5px 0 var(--tm-ink);
 }
 
-body.page-home .home-cartoons {
-  margin-top: 1.5rem;
-  padding: clamp(1.1rem, 2vw, 2rem);
-  border: 0;
+body.page-home .home-illustrated-fiction {
+  --if-night: #111321;
+  --if-blue: #273eaa;
+  --if-violet: #5b3f92;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: 1.75rem;
+  padding: clamp(1rem, 2.2vw, 2.2rem);
+  border: 1px solid var(--tm-ink);
+  border-top: 8px solid var(--tm-signal);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), transparent 36%),
-    var(--tm-signal);
-  color: #fffdf8;
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 34px 34px,
+    radial-gradient(circle at 83% 12%, rgba(91, 63, 146, 0.58), transparent 32%),
+    radial-gradient(circle at 10% 92%, rgba(39, 62, 170, 0.48), transparent 38%),
+    var(--if-night);
+  color: var(--tm-paper-bright);
   box-shadow: 12px 14px 0 var(--tm-ink);
 }
 
-body.page-home .home-cartoons__head {
-  align-items: end;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+body.page-home .home-illustrated-fiction::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -9rem;
+  right: -7rem;
+  width: min(45vw, 34rem);
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 250, 240, 0.08);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 4rem rgba(255, 250, 240, 0.018),
+    0 0 0 8rem rgba(255, 250, 240, 0.012);
+  pointer-events: none;
 }
 
-body.page-home .home-cartoons__head .eyebrow {
-  color: #ffe8dd;
-  font-family: var(--tm-code);
+body.page-home .home-illustrated-fiction > * {
+  position: relative;
+  z-index: 1;
 }
 
-body.page-home .home-cartoons__head .section-heading {
-  color: #fffdf8;
-  font-size: clamp(3.2rem, 7vw, 7.2rem);
-  line-height: 0.78;
-  letter-spacing: -0.065em;
+body.page-home .home-illustrated-fiction__head {
+  padding-bottom: clamp(0.9rem, 1.5vw, 1.2rem);
+  border-bottom: 1px solid rgba(255, 250, 240, 0.45);
 }
 
-body.page-home .home-cartoons__head .section-link {
-  color: #fffdf8;
-  font: 700 0.62rem/1 var(--tm-code);
-  letter-spacing: 0.09em;
+body.page-home .home-illustrated-fiction__head h2 {
+  margin: 0;
+  color: var(--tm-paper-bright);
+  font: 900 clamp(4rem, 8.6vw, 8.8rem)/0.72 var(--tm-display);
+  letter-spacing: -0.075em;
+}
+
+body.page-home .home-illustrated-fiction__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+body.page-home .illustrated-fiction-slot {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(18, 17, 15, 0.72);
+  background: var(--tm-paper-bright);
+  color: var(--tm-ink);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.3);
+}
+
+body.page-home .illustrated-fiction-slot--lead {
+  grid-column: span 7;
+  grid-row: span 2;
+}
+
+body.page-home .illustrated-fiction-slot--standard {
+  grid-column: span 5;
+}
+
+body.page-home .illustrated-fiction-slot--wide {
+  grid-column: span 6;
+  grid-template-columns: minmax(0, 0.9fr) minmax(16rem, 1.1fr);
+}
+
+body.page-home .illustrated-fiction-slot__art {
+  position: relative;
+  display: grid;
+  min-height: 13.5rem;
+  place-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--tm-ink);
+  background:
+    linear-gradient(135deg, transparent calc(50% - 0.5px), rgba(255, 250, 240, 0.24) 50%, transparent calc(50% + 0.5px)),
+    linear-gradient(45deg, transparent calc(50% - 0.5px), rgba(255, 250, 240, 0.16) 50%, transparent calc(50% + 0.5px)),
+    repeating-linear-gradient(90deg, transparent 0 31px, rgba(255, 250, 240, 0.065) 31px 32px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(255, 250, 240, 0.065) 31px 32px),
+    var(--if-blue);
+  color: var(--tm-paper-bright);
+  text-align: center;
+}
+
+body.page-home .illustrated-fiction-slot--lead .illustrated-fiction-slot__art {
+  min-height: 31rem;
+}
+
+body.page-home .illustrated-fiction-slot--wide .illustrated-fiction-slot__art {
+  min-height: 17rem;
+  border-right: 1px solid var(--tm-ink);
+  border-bottom: 0;
+}
+
+body.page-home .illustrated-fiction-slot:nth-child(5n + 2) .illustrated-fiction-slot__art {
+  background-color: var(--if-violet);
+}
+
+body.page-home .illustrated-fiction-slot:nth-child(5n + 3) .illustrated-fiction-slot__art {
+  background-color: #8f302b;
+}
+
+body.page-home .illustrated-fiction-slot:nth-child(5n + 4) .illustrated-fiction-slot__art {
+  background-color: #1f6970;
+}
+
+body.page-home .illustrated-fiction-slot:nth-child(5n + 5) .illustrated-fiction-slot__art {
+  background-color: #615328;
+}
+
+body.page-home .illustrated-fiction-slot__target {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(4rem, 8vw, 7rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 250, 240, 0.5);
+  border-radius: 50%;
+}
+
+body.page-home .illustrated-fiction-slot__target::before,
+body.page-home .illustrated-fiction-slot__target::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  background: rgba(255, 250, 240, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+body.page-home .illustrated-fiction-slot__target::before {
+  width: 135%;
+  height: 1px;
+}
+
+body.page-home .illustrated-fiction-slot__target::after {
+  width: 1px;
+  height: 135%;
+}
+
+body.page-home .illustrated-fiction-slot__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.62rem;
+  justify-content: center;
+  min-height: 10.5rem;
+  padding: clamp(0.95rem, 1.6vw, 1.35rem);
+}
+
+body.page-home .illustrated-fiction-slot__skeleton {
+  display: block;
+  height: 0.62rem;
+  background: rgba(18, 17, 15, 0.14);
+}
+
+body.page-home .illustrated-fiction-slot__skeleton--kicker {
+  width: 22%;
+  height: 0.42rem;
+  background: rgba(168, 34, 29, 0.34);
+}
+
+body.page-home .illustrated-fiction-slot__skeleton--title {
+  width: 76%;
+  height: clamp(1.45rem, 2vw, 2.2rem);
+  background: rgba(18, 17, 15, 0.78);
+}
+
+body.page-home .illustrated-fiction-slot__skeleton--line {
+  width: 100%;
+}
+
+body.page-home .illustrated-fiction-slot__skeleton--short {
+  width: 61%;
+}
+
+body.page-home .illustrated-fiction-entry__art {
+  place-content: stretch;
+}
+
+body.page-home .illustrated-fiction-entry__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  object-fit: cover;
+}
+
+body.page-home .illustrated-fiction-entry__body {
+  justify-content: flex-start;
+}
+
+body.page-home .illustrated-fiction-entry__format,
+body.page-home .illustrated-fiction-entry__date {
+  margin: 0;
+  color: var(--tm-signal-deep);
+  font: 700 0.61rem/1.2 var(--tm-code);
+  letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
-body.page-home .home-cartoons__copy {
-  color: rgba(255, 255, 255, 0.82);
+body.page-home .illustrated-fiction-entry__body h3 {
+  margin: 0;
+  font: 800 clamp(1.45rem, 2.35vw, 2.4rem)/0.98 var(--tm-display);
+  letter-spacing: -0.035em;
 }
 
-body.page-home .home-cartoons .story-card {
-  overflow: hidden;
-  border: 1px solid rgba(18, 17, 15, 0.55);
-  border-radius: 0;
-  background: var(--tm-paper-bright);
-  color: var(--tm-ink);
-  box-shadow: none;
+body.page-home .illustrated-fiction-entry__body h3 a {
+  color: inherit;
 }
 
-body.page-home .home-cartoons .story-card:hover {
-  transform: translate(-4px, -4px);
-  box-shadow: 8px 8px 0 var(--tm-ink);
+body.page-home .illustrated-fiction-entry__excerpt {
+  margin: 0;
+  color: #4f4a44;
+  font-size: 0.93rem;
+  line-height: 1.45;
 }
 
-body.page-home .home-cartoons .story-card__image img {
-  filter: saturate(0.88) contrast(1.03);
-  transition: transform 450ms ease, filter 220ms ease;
-}
+@media (max-width: 62rem) {
+  body.page-home .illustrated-fiction-slot--lead,
+  body.page-home .illustrated-fiction-slot--standard,
+  body.page-home .illustrated-fiction-slot--wide {
+    grid-column: span 6;
+    grid-row: auto;
+  }
 
-body.page-home .home-cartoons .story-card:hover .story-card__image img {
-  transform: scale(1.025);
-  filter: saturate(1) contrast(1.04);
-}
+  body.page-home .illustrated-fiction-slot--lead {
+    grid-column: 1 / -1;
+  }
 
-body.page-home .home-cartoons .story-card__title,
-body.page-home .home-cartoons .story-card__dek,
-body.page-home .home-cartoons .story-card__meta {
-  color: var(--tm-ink);
-}
+  body.page-home .illustrated-fiction-slot--wide {
+    grid-template-columns: 1fr;
+  }
 
-body.page-home .home-cartoons .eyebrow {
-  color: var(--tm-signal-deep);
+  body.page-home .illustrated-fiction-slot--wide .illustrated-fiction-slot__art {
+    border-right: 0;
+    border-bottom: 1px solid var(--tm-ink);
+  }
 }
 
 body.page-home .site-footer {
@@ -1406,14 +1657,31 @@ body.page-home :focus-visible {
     padding: 0.75rem;
   }
 
-  body.page-home .home-cartoons {
-    padding: 0.8rem;
+  body.page-home .home-illustrated-fiction {
+    padding: 0.75rem;
     box-shadow: 5px 7px 0 var(--tm-ink);
   }
 
-  body.page-home .home-cartoons__head .section-heading {
-    font-size: clamp(3.2rem, 18vw, 5.4rem);
+  body.page-home .home-illustrated-fiction__head h2 {
+    font-size: clamp(3.6rem, 20vw, 5.8rem);
   }
+
+  body.page-home .home-illustrated-fiction__grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.page-home .illustrated-fiction-slot--lead,
+  body.page-home .illustrated-fiction-slot--standard,
+  body.page-home .illustrated-fiction-slot--wide {
+    grid-column: 1;
+  }
+
+  body.page-home .illustrated-fiction-slot--lead .illustrated-fiction-slot__art,
+  body.page-home .illustrated-fiction-slot__art,
+  body.page-home .illustrated-fiction-slot--wide .illustrated-fiction-slot__art {
+    min-height: 16rem;
+  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

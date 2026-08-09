@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import json
 import re
+import runpy
 import shutil
 import subprocess
 from functools import cache
@@ -15,7 +17,10 @@ APP_PATH = ROOT / "app.js"
 STYLES_PATH = ROOT / "styles.css"
 HOMEPAGE_STYLES_PATH = ROOT / "homepage.css"
 HOMEPAGE_SCRIPT_PATH = ROOT / "homepage.js"
+BUILD_PATH = ROOT / "build.py"
+INDEX_PATH = ROOT / "index.html"
 RUNTIME_TEST_PATH = ROOT / "tools" / "test_mobile_reading_experience_runtime.js"
+ILLUSTRATED_FICTION_REGISTRY_PATH = ROOT / "data" / "illustrated-fiction.json"
 
 
 @cache
@@ -114,6 +119,88 @@ def test_below_fold_is_not_hidden_by_a_whole_section_reveal():
     print("✓ Below the Fold cannot become a full-height invisible mobile section")
 
 
+def test_illustrated_fiction_framework_replaces_cartoon_desk():
+    build = source(BUILD_PATH)
+    index = source(INDEX_PATH)
+    styles = source(HOMEPAGE_STYLES_PATH)
+    script = source(HOMEPAGE_SCRIPT_PATH)
+    section_match = re.search(
+        r'<section class="home-illustrated-fiction"[^>]*>(?P<body>.*?)</section>',
+        index,
+        flags=re.DOTALL,
+    )
+
+    assert "render_home_cartoons" not in build
+    assert "home-cartoons" not in index
+    assert "home-cartoons" not in styles
+    assert "home-cartoons" not in script
+    assert "render_home_illustrated_fiction" in build
+    assert section_match, "Missing illustrated-fiction homepage section"
+    section = section_match.group("body")
+    registry_entries = json.loads(source(ILLUSTRATED_FICTION_REGISTRY_PATH)).get("entries", [])
+    expected_placeholders = max(0, 5 - len(registry_entries))
+    assert section.count("data-illustrated-fiction-entry") == len(registry_entries)
+    assert section.count("data-illustrated-fiction-slot") == expected_placeholders
+    assert section.count('data-art-status="awaiting-user-art"') == expected_placeholders
+    assert section.count("<img") == len(registry_entries)
+    assert section.count('<h2 id="fantasy-title">Fantasy</h2>') == 1
+    assert "Drawn Worlds" not in section
+    assert "section-cartoons.html" not in section
+    visible_text = re.sub(r"<[^>]+>", "", section).strip()
+    if not registry_entries:
+        assert visible_text == "Fantasy", "Fantasy must be the section's only visible copy before content is supplied"
+    print("✓ Fantasy replaces the Cartoon Desk and follows the scalable archive registry")
+
+
+def test_illustrated_fiction_archive_has_no_five_item_cap():
+    build_namespace = runpy.run_path(str(BUILD_PATH))
+    render = build_namespace["render_home_illustrated_fiction"]
+    entries = [
+        {
+            "id": f"future-entry-{index}",
+            "title": "Future entry",
+            "image": "assets/future-entry.jpg",
+            "imageAlt": "Future supplied artwork",
+            "excerpt": "Future supplied story excerpt",
+        }
+        for index in range(12)
+    ]
+    rendered = render(entries)
+
+    assert rendered.count("data-illustrated-fiction-entry") == 12
+    assert "data-art-status=\"awaiting-user-art\"" not in rendered
+    print("✓ Illustrated-fiction archive renders every entry without a five-item cap")
+
+
+def test_homepage_section_navigation_uses_existing_named_sections():
+    index = source(INDEX_PATH)
+    styles = source(HOMEPAGE_STYLES_PATH)
+    nav_match = re.search(
+        r'<nav class="home-section-nav"[^>]*>(?P<body>.*?)</nav>',
+        index,
+        flags=re.DOTALL,
+    )
+
+    assert nav_match, "Missing homepage section navigation"
+    nav = nav_match.group("body")
+    expected = {
+        '#front-page': 'Front Page',
+        '#more-from-edition': 'More from the Edition',
+        '#on-this-day': 'On This Day',
+        '#below-the-fold': 'Below the Fold',
+        '#fantasy': 'Fantasy',
+    }
+    for href, label in expected.items():
+        assert f'href="{href}"' in nav
+        assert f'id="{href[1:]}"' in index
+        assert label in nav
+    assert 'href="#illustrated-fiction"' not in nav
+    assert "position: sticky" in styles
+    assert "overflow-x: auto" in styles
+    assert "getBoundingClientRect().top <= activationLine" in source(HOMEPAGE_SCRIPT_PATH)
+    print("✓ Homepage section navigation exposes all five named sections with position-based scroll tracking")
+
+
 def find_node() -> str:
     candidates = [
         shutil.which("node"),
@@ -151,8 +238,11 @@ def main():
     test_illustrated_editions_keep_native_pinch_and_restore_inline_double_tap()
     test_mobile_homepage_uses_one_scrim_not_two()
     test_below_fold_is_not_hidden_by_a_whole_section_reveal()
+    test_illustrated_fiction_framework_replaces_cartoon_desk()
+    test_illustrated_fiction_archive_has_no_five_item_cap()
+    test_homepage_section_navigation_uses_existing_named_sections()
     test_mobile_interactions_in_browser()
-    print("\n✅ All 5 mobile reading experience checks passed!")
+    print("\n✅ All 8 mobile reading experience checks passed!")
 
 
 if __name__ == "__main__":

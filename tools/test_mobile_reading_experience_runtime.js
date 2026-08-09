@@ -14,6 +14,9 @@ const STANDARD_ARTICLE_PATH = '/culture-streaming-grew-up-and-became-tv-again.ht
 const INLINE_SELECTOR = '.ny-love-letter-feature .ny-love-newspaper-sheet > img';
 const MOB_INLINE_SELECTOR = '.press-image-edition .press-image-edition__sheet > img';
 const STANDARD_SELECTOR = '.article-hero .hero-figure img';
+const ILLUSTRATED_FICTION_ENTRIES = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'data/illustrated-fiction.json'), 'utf8'),
+).entries;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -480,17 +483,22 @@ async function testMobileHomepageSectionsDoNotBecomeBlankRuns(browser, origin) {
     const history = document.querySelector('.on-this-day');
     const below = document.querySelector('.below-fold-flipper');
     const shelf = document.querySelector('.below-fold-shelf');
-    const cartoons = document.querySelector('.home-cartoons');
+    const illustratedFiction = document.querySelector('.home-illustrated-fiction');
     const historyRect = history?.getBoundingClientRect();
     const belowRect = below?.getBoundingClientRect();
     const toolbarRect = below?.querySelector('.below-fold-flipper__toolbar')?.getBoundingClientRect();
     return {
       correctOrder: Boolean(
-        history && below && shelf && cartoons
+        history && below && shelf && illustratedFiction
         && (history.compareDocumentPosition(below) & Node.DOCUMENT_POSITION_FOLLOWING)
         && (below.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING)
-        && (shelf.compareDocumentPosition(cartoons) & Node.DOCUMENT_POSITION_FOLLOWING)
+        && (shelf.compareDocumentPosition(illustratedFiction) & Node.DOCUMENT_POSITION_FOLLOWING)
       ),
+      oldCartoonSections: document.querySelectorAll('.home-cartoons').length,
+      illustratedFictionSections: document.querySelectorAll('.home-illustrated-fiction').length,
+      illustratedFictionSlots: illustratedFiction?.querySelectorAll('[data-illustrated-fiction-slot]').length ?? 0,
+      illustratedFictionImages: illustratedFiction?.querySelectorAll('img').length ?? 0,
+      illustratedFictionText: illustratedFiction?.textContent.replace(/\s+/g, ' ').trim() ?? '',
       layoutGap: historyRect && belowRect ? belowRect.top - historyRect.bottom : null,
       revealHidden: below?.classList.contains('press-preview-reveal')
         && !below.classList.contains('is-visible'),
@@ -499,12 +507,104 @@ async function testMobileHomepageSectionsDoNotBecomeBlankRuns(browser, origin) {
     };
   });
 
-  assert(state.correctOrder, 'Homepage section order is not On This Day → Below the Fold → shelf → Cartoons');
+  assert(state.correctOrder, 'Homepage section order is not On This Day → Below the Fold → shelf → Illustrated Fiction');
+  assert(state.oldCartoonSections === 0, 'The retired homepage Cartoon Desk is still rendered');
+  assert(state.illustratedFictionSections === 1, 'Homepage must render exactly one illustrated-fiction section');
+  assert(state.illustratedFictionSlots === Math.max(0, 5 - ILLUSTRATED_FICTION_ENTRIES.length), 'Fantasy placeholder count does not match its archive registry');
+  assert(state.illustratedFictionImages === ILLUSTRATED_FICTION_ENTRIES.length, 'Fantasy image count does not match its archive registry');
+  if (!ILLUSTRATED_FICTION_ENTRIES.length) {
+    assert(state.illustratedFictionText === 'Fantasy', 'Fantasy must be the section\'s only visible copy before content is supplied');
+  }
   assert(state.layoutGap <= 32, `Homepage inserted a ${state.layoutGap}px spacer after On This Day`);
   assert(!state.revealHidden, 'Below the Fold is reserved in layout but stuck in its hidden reveal state');
   assert(state.opacity >= 0.95 && state.toolbarVisible, 'Below the Fold remained visually blank on mobile');
   await context.close();
   console.log('✓ Runtime: Below the Fold is visible immediately after On This Day on mobile');
+}
+
+async function testHomepageSectionNavigation(browser, origin) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.goto(origin, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.home-section-nav');
+
+  const initial = await page.evaluate(() => {
+    const nav = document.querySelector('.home-section-nav');
+    return {
+      hrefs: [...nav.querySelectorAll('a')].map((link) => link.getAttribute('href')),
+      position: getComputedStyle(nav).position,
+      horizontalScroll: nav.querySelector('.home-section-nav__links').scrollWidth
+        > nav.querySelector('.home-section-nav__links').clientWidth,
+    };
+  });
+  const expectedHrefs = ['#front-page', '#more-from-edition', '#on-this-day', '#below-the-fold', '#fantasy'];
+  assert(initial.hrefs.join('|') === expectedHrefs.join('|'), 'Homepage section navigation does not expose all five named sections');
+  assert(initial.position === 'sticky', 'Homepage section navigation is not sticky');
+  assert(initial.horizontalScroll, 'Homepage section navigation is not horizontally scrollable on mobile');
+
+  for (const href of expectedHrefs) {
+    await page.evaluate((targetHref) => {
+      const body = document.body;
+      body.scrollTop = targetHref === '#fantasy' ? 0 : body.scrollHeight;
+    }, href);
+    await page.waitForTimeout(80);
+    const before = await page.evaluate(() => document.body.scrollTop);
+    await page.locator(`.home-section-nav a[href="${href}"]`).click();
+    await page.waitForFunction((targetHref) => {
+      const target = document.querySelector(targetHref);
+      const current = document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href');
+      const top = target?.getBoundingClientRect().top;
+      return location.hash === targetHref && current === targetHref && top >= 0 && top < 90;
+    }, href);
+    const jump = await page.evaluate(() => ({
+      hash: location.hash,
+      current: document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href'),
+      scrollTop: document.body.scrollTop,
+      targetTop: document.querySelector(location.hash)?.getBoundingClientRect().top,
+    }));
+    assert(jump.hash === href && jump.current === href, `${href} jump did not update location and current state`);
+    assert(Math.abs(jump.scrollTop - before) > 20, `${href} changed the hash without moving the page`);
+    assert(jump.targetTop >= 0 && jump.targetTop < 90, `${href} did not finish at its real target`);
+  }
+
+  await page.locator('.home-section-nav a[href="#front-page"]').click();
+  await page.waitForFunction(() => (
+    document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href') === '#front-page'
+    && document.querySelector('#front-page').getBoundingClientRect().top < 90
+  ));
+  const fantasyTop = await page.locator('#fantasy').evaluate((target) => target.getBoundingClientRect().top + document.body.scrollTop);
+  await page.locator('.home-section-nav a[href="#fantasy"]').click();
+  await page.waitForTimeout(100);
+  const animatedPosition = await page.evaluate(() => document.body.scrollTop);
+  assert(animatedPosition > 0 && animatedPosition < fantasyTop - 50, 'Fantasy jump did not visibly animate through the page');
+  await page.waitForFunction(() => (
+    document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href') === '#fantasy'
+    && document.querySelector('#fantasy').getBoundingClientRect().top < 90
+  ));
+  const animatedDestination = await page.evaluate(() => ({
+    current: document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href'),
+    top: document.querySelector('#fantasy').getBoundingClientRect().top,
+  }));
+  assert(animatedDestination.current === '#fantasy' && animatedDestination.top < 90, 'Animated Fantasy jump did not finish at its target');
+
+  for (const href of expectedHrefs) {
+    await page.evaluate((targetHref) => {
+      const body = document.body;
+      const target = document.querySelector(targetHref);
+      const absoluteTop = target.getBoundingClientRect().top + body.scrollTop;
+      body.scrollTo({ top: Math.max(0, absoluteTop - 64), behavior: 'auto' });
+    }, href);
+    await page.waitForTimeout(200);
+    const current = await page.locator('.home-section-nav a[aria-current="location"]').getAttribute('href');
+    assert(current === href, `${href} did not become current during position-based scrolling`);
+  }
+
+  await context.close();
+  console.log('✓ Runtime: sticky section navigation jumps to and tracks all five named homepage sections on mobile');
 }
 
 async function main() {
@@ -522,6 +622,7 @@ async function main() {
     await testKeyboardAndMouseKeepAccessibleLightbox(browser, server.origin);
     await testAllMobileHomepageHeroesKeepOneScrimAndTopAlignedArt(browser, server.origin);
     await testMobileHomepageSectionsDoNotBecomeBlankRuns(browser, server.origin);
+    await testHomepageSectionNavigation(browser, server.origin);
   } finally {
     if (browser) await browser.close();
     await server.close();

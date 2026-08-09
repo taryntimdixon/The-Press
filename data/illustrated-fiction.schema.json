@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The Press illustrated fiction archive",
+  "type": "object",
+  "required": ["schemaVersion", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "image", "imageAlt", "excerpt"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "title": { "type": "string", "minLength": 1 },
+          "image": { "type": "string", "minLength": 1 },
+          "imageAlt": { "type": "string", "minLength": 1 },
+          "excerpt": { "type": "string", "minLength": 1 },
+          "href": { "type": "string", "minLength": 1 },
+          "format": { "type": "string", "minLength": 1 },
+          "publishedLabel": { "type": "string", "minLength": 1 },
+          "imageWidth": { "type": "integer", "minimum": 1 },
+          "imageHeight": { "type": "integer", "minimum": 1 },
+          "layout": { "enum": ["lead", "standard", "wide"] }
+        }
+      }
+    }
+  }
+}

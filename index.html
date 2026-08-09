@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&amp;family=Space+Mono:wght@400;700&amp;display=swap" data-press-fonts />
-  <link rel="stylesheet" href="styles.css?v=1784519047" />
+  <link rel="stylesheet" href="styles.css?v=1786233931" />
   <link rel="manifest" href="site.webmanifest" />
   <link rel="alternate" type="application/rss+xml" title="The Press feed" href="feed.xml" />
   <meta property="og:type" content="website" />
@@ -45,7 +45,7 @@
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <script type="application/ld+json">{"@context": "https://schema.org", "@type": "NewsMediaOrganization", "name": "The Press", "url": "https://thepress.live", "logo": "https://thepress.live/assets/favicon.svg", "slogan": "AI Powered Journalism", "diversityPolicy": "https://thepress.live/about.html"}</script>
-  <link rel="stylesheet" href="homepage.css?v=1784519047" />
+  <link rel="stylesheet" href="homepage.css?v=1786235579" />
 </head>
 <body class="page-home">
   <div class="search-overlay" hidden data-search-overlay>
@@ -84,7 +84,17 @@
   </div>
 </header>
   <main class="page">
-  <section class="home-hero">
+  <nav class="home-section-nav" aria-label="Jump to homepage sections">
+    <div class="home-section-nav__links">
+      <a href="#front-page" aria-current="location">Front Page</a>
+      <a href="#more-from-edition">More from the Edition</a>
+      <a href="#on-this-day">On This Day</a>
+      <a href="#below-the-fold">Below the Fold</a>
+      <a href="#fantasy">Fantasy</a>
+    </div>
+  </nav>
+
+  <section class="home-hero" id="front-page">
     <div class="home-hero__intro">
       <p class="eyebrow">Front page</p>
       <h1>The Press</h1>
@@ -211,7 +221,7 @@
     </div>
   </section>
 
-  <section class="home-recency-section" data-home-recency-section>
+  <section class="home-recency-section" id="more-from-edition" data-home-recency-section>
       <div class="section-heading-row">
         <h2 class="section-heading">More from the edition</h2>
         <a class="section-link" href="archive.html">Open archive</a>
@@ -583,7 +593,7 @@
           </article>
         </div>
       </section>
-      <section class="below-fold-flipper" data-below-fold-flipper data-current-slug="automation-ledger" aria-labelledby="below-fold-flipper-title">
+      <section class="below-fold-flipper" id="below-the-fold" data-below-fold-flipper data-current-slug="automation-ledger" aria-labelledby="below-fold-flipper-title">
     <div class="below-fold-flipper__toolbar">
       <div>
         <p class="below-fold-kicker">Below the Fold stack</p>
@@ -970,51 +980,66 @@
 </article>
     </div>
   </section>
-      <section class="home-cartoons" aria-labelledby="home-cartoons-title">
-    <div class="home-cartoons__head section-heading-row">
-      <div>
-        <p class="eyebrow">Cartoon Desk</p>
-        <h2 class="section-heading" id="home-cartoons-title">Cartoons</h2>
-      </div>
-      <a class="section-link" href="section-cartoons.html" data-preserve-section-link>Open cartoons</a>
-    </div>
-    <p class="home-cartoons__copy">Popular-topic cartoons, visual satire, and creative one-offs, whether or not they begin with a Press story.</p>
-    <div class="home-cartoons__layout">
-      <article class="story-card story-card--lead home-cartoons__featured" data-section="Cartoons" data-type="Editorial Cartoon">
-  <a class="story-card__image" href="cartoons-the-mission-statement-takes-the-stand.html">
-    <img src="assets/cartoons-mission-statement-takes-the-stand.png" alt="Editorial cartoon of caricatured Elon Musk and Sam Altman tugging on ribbons around a nervous mission-statement scroll in a courtroom" loading="lazy" decoding="async" width="1672" height="941" />
-  </a>
-  <div class="story-card__body">
-    <p class="eyebrow eyebrow--compact">Cartoons • Editorial Cartoon</p>
-    <h3 class="story-card__title"><a href="cartoons-the-mission-statement-takes-the-stand.html">The Mission Statement Takes the Stand</a></h3>
-    <p class="story-card__dek">An editorial cartoon on the Musk-OpenAI trial, where the legal deadline ended the case but the mission-versus-money question kept its seat in the courtroom.</p>
-    <p class="story-card__meta">By The Press • June 5, 2026 • 11:00 a.m. EDT</p>
-  </div>
-</article>
-
-    <div class="home-cartoons__stack">
-      <article class="story-card home-cartoons__card" data-section="Cartoons" data-type="Comic">
-  <a class="story-card__image" href="cartoons-hate-to-see-you-go.html">
-    <img src="assets/cartoons-hate-to-see-you-go.png" alt="Editorial comic of a person with a suitcase trying to leave while a cheerful phone-shaped app blocks the door with forms, pop-ups, and a heart button" loading="lazy" decoding="async" width="1672" height="941" />
-  </a>
-  <div class="story-card__body">
-    <p class="eyebrow eyebrow--compact">Cartoons • Comic</p>
-    <h3 class="story-card__title"><a href="cartoons-hate-to-see-you-go.html">Hate to See You Go</a></h3>
-    <p class="story-card__dek">The first Press comic is about the little performance every app gives when a reader, customer, or exhausted human tries to leave.</p>
-    <p class="story-card__meta">By The Press • June 5, 2026 • 8:00 a.m. EDT</p>
-  </div>
-</article><article class="story-card home-cartoons__card" data-section="Cartoons" data-type="Editor&#x27;s Note">
-  <a class="story-card__image" href="cartoons-the-cartoon-desk-opens-its-notebook.html">
-    <img src="assets/cartoons-launch-thumbnail.svg" alt="Cartoon desk illustration with comic panels, a pencil, speech balloons, and a red editorial stamp" loading="lazy" decoding="async" width="1200" height="675" />
-  </a>
-  <div class="story-card__body">
-    <p class="eyebrow eyebrow--compact">Cartoons • Editor&#x27;s Note</p>
-    <h3 class="story-card__title"><a href="cartoons-the-cartoon-desk-opens-its-notebook.html">The Cartoon Desk Opens Its Notebook</a></h3>
-    <p class="story-card__dek">The Press is adding a Cartoon Desk for editorial cartoons, visual satire, and drawn commentary. The rule is simple: make the joke sharp, make the label clear, and never ask readers to mistake invention for reporting.</p>
-    <p class="story-card__meta">By The Press • June 4, 2026 • 9:00 a.m. EDT</p>
-  </div>
-</article>
-    </div>
+      <section class="home-illustrated-fiction" id="fantasy" aria-labelledby="fantasy-title">
+    <header class="home-illustrated-fiction__head">
+      <h2 id="fantasy-title">Fantasy</h2>
+    </header>
+    <div class="home-illustrated-fiction__grid">
+<article class="illustrated-fiction-slot illustrated-fiction-slot--lead" data-illustrated-fiction-slot="1" aria-hidden="true">
+        <div class="illustrated-fiction-slot__art" data-art-status="awaiting-user-art">
+          <span class="illustrated-fiction-slot__target" aria-hidden="true"></span>
+        </div>
+        <div class="illustrated-fiction-slot__body" aria-hidden="true">
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--kicker"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--title"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line illustrated-fiction-slot__skeleton--short"></span>
+        </div>
+      </article>
+<article class="illustrated-fiction-slot illustrated-fiction-slot--standard" data-illustrated-fiction-slot="2" aria-hidden="true">
+        <div class="illustrated-fiction-slot__art" data-art-status="awaiting-user-art">
+          <span class="illustrated-fiction-slot__target" aria-hidden="true"></span>
+        </div>
+        <div class="illustrated-fiction-slot__body" aria-hidden="true">
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--kicker"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--title"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line illustrated-fiction-slot__skeleton--short"></span>
+        </div>
+      </article>
+<article class="illustrated-fiction-slot illustrated-fiction-slot--standard" data-illustrated-fiction-slot="3" aria-hidden="true">
+        <div class="illustrated-fiction-slot__art" data-art-status="awaiting-user-art">
+          <span class="illustrated-fiction-slot__target" aria-hidden="true"></span>
+        </div>
+        <div class="illustrated-fiction-slot__body" aria-hidden="true">
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--kicker"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--title"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line illustrated-fiction-slot__skeleton--short"></span>
+        </div>
+      </article>
+<article class="illustrated-fiction-slot illustrated-fiction-slot--wide" data-illustrated-fiction-slot="4" aria-hidden="true">
+        <div class="illustrated-fiction-slot__art" data-art-status="awaiting-user-art">
+          <span class="illustrated-fiction-slot__target" aria-hidden="true"></span>
+        </div>
+        <div class="illustrated-fiction-slot__body" aria-hidden="true">
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--kicker"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--title"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line illustrated-fiction-slot__skeleton--short"></span>
+        </div>
+      </article>
+<article class="illustrated-fiction-slot illustrated-fiction-slot--wide" data-illustrated-fiction-slot="5" aria-hidden="true">
+        <div class="illustrated-fiction-slot__art" data-art-status="awaiting-user-art">
+          <span class="illustrated-fiction-slot__target" aria-hidden="true"></span>
+        </div>
+        <div class="illustrated-fiction-slot__body" aria-hidden="true">
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--kicker"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--title"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line illustrated-fiction-slot__skeleton--short"></span>
+        </div>
+      </article>
     </div>
   </section>
     </div>
@@ -1045,6 +1070,6 @@
 <script src="assets/on-this-day-summary.js?v=1780755531" defer></script>
 <script src="assets/on-this-day-artwork.js?v=1783827990" defer></script>
 <script src="app.js?v=1784520167" defer></script>
-<script src="homepage.js?v=1784519047" defer></script>
+<script src="homepage.js?v=1786235579" defer></script>
 </body>
 </html>

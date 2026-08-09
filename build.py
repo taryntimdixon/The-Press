@@ -78,6 +78,7 @@ def h(value: object) -> str:
 
 BELOW_FOLD_NEWSSTAND_URL = "below-the-fold.html"
 BELOW_FOLD_REGISTRY_PATH = SITE_DIR / "data" / "below-the-fold.json"
+ILLUSTRATED_FICTION_REGISTRY_PATH = SITE_DIR / "data" / "illustrated-fiction.json"
 ARTICLE_SPREAD_START = datetime.fromisoformat("2026-05-11T09:00:00-04:00")
 ARTICLE_SPREAD_VARIANTS = 5
 ARTICLE_LATEST_COUNT = 5
@@ -925,13 +926,51 @@ def section_stories(section_slug: str) -> list[dict]:
     return [story for story in STORIES if story["sectionSlug"] == section_slug]
 
 
-def homepage_cartoon_stories(limit: int = 4) -> list[dict]:
-    cartoons = [
-        story
-        for story in STORIES
-        if story.get("sectionSlug") == "cartoons" and story.get("filename") and story.get("image")
-    ]
-    return cartoons[:limit]
+ILLUSTRATED_FICTION_INITIAL_SLOT_COUNT = 5
+ILLUSTRATED_FICTION_LAYOUT_SEQUENCE = (
+    "lead",
+    "standard",
+    "standard",
+    "wide",
+    "wide",
+    "standard",
+    "standard",
+    "wide",
+)
+
+
+def load_illustrated_fiction_entries() -> list[dict]:
+    try:
+        registry_text = ILLUSTRATED_FICTION_REGISTRY_PATH.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return []
+    payload = json.loads(registry_text)
+    entries = payload.get("entries", [])
+    if not isinstance(entries, list):
+        raise ValueError("Illustrated-fiction registry entries must be a list")
+    required = ("id", "title", "image", "imageAlt", "excerpt")
+    seen_ids: set[str] = set()
+    for position, entry in enumerate(entries, start=1):
+        if not isinstance(entry, dict):
+            raise ValueError(f"Illustrated-fiction entry {position} must be an object")
+        missing = [field for field in required if not str(entry.get(field) or "").strip()]
+        if missing:
+            raise ValueError(f"Illustrated-fiction entry {position} is missing: {', '.join(missing)}")
+        entry_id = str(entry["id"]).strip()
+        if entry_id in seen_ids:
+            raise ValueError(f"Duplicate illustrated-fiction entry id: {entry_id}")
+        seen_ids.add(entry_id)
+        layout = str(entry.get("layout") or "").strip()
+        if layout and layout not in {"lead", "standard", "wide"}:
+            raise ValueError(f"Illustrated-fiction entry {entry_id} has unsupported layout: {layout}")
+    return entries
+
+
+ILLUSTRATED_FICTION_ENTRIES = load_illustrated_fiction_entries()
+
+
+def illustrated_fiction_layout(index: int) -> str:
+    return ILLUSTRATED_FICTION_LAYOUT_SEQUENCE[index % len(ILLUSTRATED_FICTION_LAYOUT_SEQUENCE)]
 
 
 def related_stories(story: dict) -> list[dict]:
@@ -992,35 +1031,62 @@ def recency_ticker_item(story: dict, duplicate: bool = False) -> str:
 """.strip()
 
 
-def render_home_cartoons() -> str:
-    cartoons = homepage_cartoon_stories()
-    if not cartoons:
-        return ""
-    featured = cartoons[0]
-    supporting = cartoons[1:4]
-    supporting_markup = (
-        f"""
-    <div class="home-cartoons__stack">
-      {"".join(story_card(story, "home-cartoons__card") for story in supporting)}
-    </div>
-""".rstrip()
-        if supporting
-        else ""
-    )
-    solo_class = " home-cartoons__layout--solo" if not supporting else ""
+def illustrated_fiction_slot(index: int) -> str:
+    slot_number = index + 1
+    layout = illustrated_fiction_layout(index)
     return f"""
-  <section class="home-cartoons" aria-labelledby="home-cartoons-title">
-    <div class="home-cartoons__head section-heading-row">
-      <div>
-        <p class="eyebrow">Cartoon Desk</p>
-        <h2 class="section-heading" id="home-cartoons-title">Cartoons</h2>
-      </div>
-      <a class="section-link" href="section-cartoons.html" data-preserve-section-link>Open cartoons</a>
-    </div>
-    <p class="home-cartoons__copy">Popular-topic cartoons, visual satire, and creative one-offs, whether or not they begin with a Press story.</p>
-    <div class="home-cartoons__layout{solo_class}">
-      {story_card(featured, "story-card--lead home-cartoons__featured")}
-{supporting_markup}
+      <article class="illustrated-fiction-slot illustrated-fiction-slot--{h(layout)}" data-illustrated-fiction-slot="{slot_number}" aria-hidden="true">
+        <div class="illustrated-fiction-slot__art" data-art-status="awaiting-user-art">
+          <span class="illustrated-fiction-slot__target" aria-hidden="true"></span>
+        </div>
+        <div class="illustrated-fiction-slot__body" aria-hidden="true">
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--kicker"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--title"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line"></span>
+          <span class="illustrated-fiction-slot__skeleton illustrated-fiction-slot__skeleton--line illustrated-fiction-slot__skeleton--short"></span>
+        </div>
+      </article>
+""".strip()
+
+
+def illustrated_fiction_entry(entry: dict, index: int) -> str:
+    layout = str(entry.get("layout") or illustrated_fiction_layout(index))
+    entry_id = str(entry["id"])
+    href = str(entry.get("href") or "").strip()
+    title = h(entry["title"])
+    title_markup = f'<a href="{h(href)}">{title}</a>' if href else title
+    image_width = f' width="{h(entry["imageWidth"])}"' if entry.get("imageWidth") else ""
+    image_height = f' height="{h(entry["imageHeight"])}"' if entry.get("imageHeight") else ""
+    format_markup = f'<p class="illustrated-fiction-entry__format">{h(entry["format"])}</p>' if entry.get("format") else ""
+    date_markup = f'<p class="illustrated-fiction-entry__date">{h(entry["publishedLabel"])}</p>' if entry.get("publishedLabel") else ""
+    return f"""
+      <article class="illustrated-fiction-slot illustrated-fiction-slot--{h(layout)} illustrated-fiction-entry" data-illustrated-fiction-entry="{h(entry_id)}">
+        <div class="illustrated-fiction-slot__art illustrated-fiction-entry__art">
+          <img src="{h(entry['image'])}" alt="{h(entry['imageAlt'])}" loading="lazy" decoding="async"{image_width}{image_height} />
+        </div>
+        <div class="illustrated-fiction-slot__body illustrated-fiction-entry__body">
+          {format_markup}
+          <h3>{title_markup}</h3>
+          <p class="illustrated-fiction-entry__excerpt">{h(entry['excerpt'])}</p>
+          {date_markup}
+        </div>
+      </article>
+""".strip()
+
+
+def render_home_illustrated_fiction(entries: list[dict] | None = None) -> str:
+    archive_entries = ILLUSTRATED_FICTION_ENTRIES if entries is None else entries
+    cards = [illustrated_fiction_entry(entry, index) for index, entry in enumerate(archive_entries)]
+    placeholder_total = max(ILLUSTRATED_FICTION_INITIAL_SLOT_COUNT, len(archive_entries))
+    cards.extend(illustrated_fiction_slot(index) for index in range(len(archive_entries), placeholder_total))
+    slots = "\n".join(cards)
+    return f"""
+  <section class="home-illustrated-fiction" id="fantasy" aria-labelledby="fantasy-title">
+    <header class="home-illustrated-fiction__head">
+      <h2 id="fantasy-title">Fantasy</h2>
+    </header>
+    <div class="home-illustrated-fiction__grid">
+{slots}
     </div>
   </section>
 """.strip()
@@ -1998,7 +2064,7 @@ def render_home_below_fold_newsstand() -> str:
         bit for bit in [below_fold_issue_number_label(latest), str(latest.get("dateLabel") or "").strip()] if bit
     )
     flipper = f"""
-  <section class="below-fold-flipper" data-below-fold-flipper data-current-slug="{h(latest['slug'])}" aria-labelledby="below-fold-flipper-title">
+  <section class="below-fold-flipper" id="below-the-fold" data-below-fold-flipper data-current-slug="{h(latest['slug'])}" aria-labelledby="below-fold-flipper-title">
     <div class="below-fold-flipper__toolbar">
       <div>
         <p class="below-fold-kicker">Below the Fold stack</p>
@@ -2937,7 +3003,17 @@ def render_homepage() -> str:
     recency_cards_duplicate = "\n".join(recency_ticker_item(story, duplicate=True) for story in recency_stories)
     main = f"""
 <main class="page">
-  <section class="home-hero">
+  <nav class="home-section-nav" aria-label="Jump to homepage sections">
+    <div class="home-section-nav__links">
+      <a href="#front-page" aria-current="location">Front Page</a>
+      <a href="#more-from-edition">More from the Edition</a>
+      <a href="#on-this-day">On This Day</a>
+      <a href="#below-the-fold">Below the Fold</a>
+      <a href="#fantasy">Fantasy</a>
+    </div>
+  </nav>
+
+  <section class="home-hero" id="front-page">
     <div class="home-hero__intro">
       <p class="eyebrow">Front page</p>
       <h1>{h(SITE['name'])}</h1>
@@ -2952,7 +3028,7 @@ def render_homepage() -> str:
     </div>
   </section>
 
-  <section class="home-recency-section" data-home-recency-section>
+  <section class="home-recency-section" id="more-from-edition" data-home-recency-section>
       <div class="section-heading-row">
         <h2 class="section-heading">More from the edition</h2>
         <a class="section-link" href="archive.html">Open archive</a>
@@ -2997,7 +3073,7 @@ def render_homepage() -> str:
         </div>
       </section>
       {render_home_below_fold_newsstand()}
-      {render_home_cartoons()}
+      {render_home_illustrated_fiction()}
     </div>
   </section>
 

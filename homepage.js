@@ -69,10 +69,106 @@
     }, { passive: true });
   }
 
-  const revealTargets = Array.from(document.querySelectorAll(
-    ".home-recency-section, .on-this-day, .home-cartoons"
-  ));
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sectionNav = document.querySelector(".home-section-nav");
+  const sectionNavScroller = sectionNav?.querySelector(".home-section-nav__links");
+  const sectionNavLinks = Array.from(sectionNav?.querySelectorAll('a[href^="#"]') || []);
+  const sectionNavTargets = sectionNavLinks
+    .map((link) => ({ link, target: document.querySelector(link.getAttribute("href")) }))
+    .filter((item) => item.target);
+  const pageScroller = body;
+  const pageScrollTop = () => Math.max(
+    pageScroller.scrollTop,
+    document.documentElement.scrollTop,
+    window.scrollY || 0
+  );
+
+  const setCurrentSection = (targetId) => {
+    sectionNavTargets.forEach(({ link, target }) => {
+      const isCurrent = target.id === targetId;
+      if (isCurrent) {
+        link.setAttribute("aria-current", "location");
+        if (sectionNavScroller) {
+          const left = link.offsetLeft - ((sectionNavScroller.clientWidth - link.offsetWidth) / 2);
+          sectionNavScroller.scrollTo({ left: Math.max(0, left), behavior: "auto" });
+        }
+      } else link.removeAttribute("aria-current");
+    });
+  };
+
+  let sectionStateFrame = 0;
+  const updateCurrentSection = () => {
+    sectionStateFrame = 0;
+    if (!sectionNavTargets.length) return;
+    const navBottom = sectionNav?.getBoundingClientRect().bottom || 0;
+    const activationLine = navBottom + Math.min(150, window.innerHeight * 0.18);
+    const viewportHeight = pageScroller.clientHeight || window.innerHeight;
+    const atPageEnd = pageScrollTop() + viewportHeight >= pageScroller.scrollHeight - 2;
+    let current = sectionNavTargets[0];
+
+    sectionNavTargets.forEach((item) => {
+      if (item.target.getBoundingClientRect().top <= activationLine) current = item;
+    });
+    if (atPageEnd) current = sectionNavTargets[sectionNavTargets.length - 1];
+    setCurrentSection(current.target.id);
+  };
+
+  const queueSectionState = () => {
+    if (sectionStateFrame) return;
+    sectionStateFrame = window.requestAnimationFrame(updateCurrentSection);
+  };
+
+  body.addEventListener("scroll", queueSectionState, { passive: true });
+  window.addEventListener("scroll", queueSectionState, { passive: true });
+  window.addEventListener("resize", queueSectionState, { passive: true });
+  updateCurrentSection();
+
+  let sectionJumpFrame = 0;
+  const animateSectionJump = (target) => {
+    if (sectionJumpFrame) window.cancelAnimationFrame(sectionJumpFrame);
+    const start = pageScrollTop();
+    const scrollMargin = Number.parseFloat(window.getComputedStyle(target).scrollMarginTop) || 0;
+    const viewportHeight = pageScroller.clientHeight || window.innerHeight;
+    const maximum = Math.max(0, pageScroller.scrollHeight - viewportHeight);
+    const destination = Math.min(maximum, Math.max(0, start + target.getBoundingClientRect().top - scrollMargin));
+    const distance = destination - start;
+
+    if (reduceMotion || Math.abs(distance) < 2) {
+      pageScroller.scrollTo({ top: destination, behavior: "auto" });
+      updateCurrentSection();
+      return;
+    }
+
+    const duration = Math.min(820, Math.max(360, 320 + Math.abs(distance) * 0.035));
+    const startedAt = window.performance.now();
+    const step = (now) => {
+      const elapsed = Math.min(1, (now - startedAt) / duration);
+      const eased = elapsed < 0.5
+        ? 4 * elapsed * elapsed * elapsed
+        : 1 - Math.pow(-2 * elapsed + 2, 3) / 2;
+      pageScroller.scrollTo(0, start + (distance * eased));
+      if (elapsed < 1) sectionJumpFrame = window.requestAnimationFrame(step);
+      else {
+        sectionJumpFrame = 0;
+        updateCurrentSection();
+      }
+    };
+    sectionJumpFrame = window.requestAnimationFrame(step);
+  };
+
+  sectionNavLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const item = sectionNavTargets.find(({ link: candidate }) => candidate === link);
+      if (!item) return;
+      event.preventDefault();
+      window.history.pushState(null, "", link.hash);
+      animateSectionJump(item.target);
+    });
+  });
+
+  const revealTargets = Array.from(document.querySelectorAll(
+    ".home-recency-section, .on-this-day, .home-illustrated-fiction"
+  ));
 
   revealTargets.forEach((node) => node.classList.add("press-preview-reveal"));
 
