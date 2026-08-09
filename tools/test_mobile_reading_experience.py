@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import html
 import re
 import runpy
 import shutil
@@ -149,10 +150,31 @@ def test_illustrated_fiction_framework_replaces_cartoon_desk():
     visible_text = re.sub(r"<[^>]+>", "", section).strip()
     if not registry_entries:
         assert visible_text == "Fantasy", "Fantasy must be the section's only visible copy before content is supplied"
+    else:
+        for entry in registry_entries:
+            assert f'data-illustrated-fiction-entry="{entry["id"]}"' in section
+            assert f'src="{entry["image"]}"' in section
+            assert f'<h3>{entry["title"]}</h3>' in section
+            assert f'href="{entry["href"]}"' in section
+            assert entry["teaser"] in section
+            assert all(paragraph not in section for paragraph in entry["story"])
+            reading_page = source(ROOT / entry["href"])
+            assert f'data-illustrated-fiction-reading="{entry["id"]}"' in reading_page
+            escaped_story = [html.escape(paragraph, quote=True) for paragraph in entry["story"]]
+            assert reading_page.index(f'src="{entry["image"]}"') < reading_page.index(escaped_story[0])
+            assert all(paragraph in reading_page for paragraph in escaped_story)
+            copy = " ".join([entry["teaser"], *entry["story"]]).lower()
+            forbidden_art_premise = ("portrait", "illustration", "artwork", "paper", "painting", "painted", "drawing", "artist", "canvas", "image-making")
+            assert all(term not in copy for term in forbidden_art_premise)
+            reading_header = re.search(r'<header class="fantasy-reading__header">(?P<body>.*?)</header>', reading_page, flags=re.DOTALL)
+            assert reading_header and re.sub(r"<[^>]+>", "", reading_header.group("body")).strip() == entry["title"]
     print("✓ Fantasy replaces the Cartoon Desk and follows the scalable archive registry")
 
 
 def test_illustrated_fiction_archive_has_no_five_item_cap():
+    build = source(BUILD_PATH)
+    styles = source(HOMEPAGE_STYLES_PATH)
+    schema = json.loads(source(ROOT / "data" / "illustrated-fiction.schema.json"))
     build_namespace = runpy.run_path(str(BUILD_PATH))
     render = build_namespace["render_home_illustrated_fiction"]
     entries = [
@@ -161,15 +183,42 @@ def test_illustrated_fiction_archive_has_no_five_item_cap():
             "title": "Future entry",
             "image": "assets/future-entry.jpg",
             "imageAlt": "Future supplied artwork",
-            "excerpt": "Future supplied story excerpt",
+            "aspectRatio": "1:1",
+            "href": f"fantasy-future-entry-{index}.html",
+            "teaser": "Future supplied teaser",
+            "story": ["Future supplied story"],
         }
         for index in range(12)
     ]
     rendered = render(entries)
+    art_rule = re.search(
+        r"body\.page-home \.illustrated-fiction-slot__art \{(?P<body>.*?)\n\}",
+        styles,
+        flags=re.DOTALL,
+    )
+    image_rule = re.search(
+        r"body\.page-home \.illustrated-fiction-entry__art img \{(?P<body>.*?)\n\}",
+        styles,
+        flags=re.DOTALL,
+    )
 
     assert rendered.count("data-illustrated-fiction-entry") == 12
     assert "data-art-status=\"awaiting-user-art\"" not in rendered
-    print("✓ Illustrated-fiction archive renders every entry without a five-item cap")
+    assert "ILLUSTRATED_FICTION_LAYOUT_SEQUENCE" not in build
+    assert "illustrated_fiction_layout" not in build
+    for haystack in (rendered, styles):
+        for variant in ("lead", "standard", "wide"):
+            assert f"illustrated-fiction-slot--{variant}" not in haystack
+    assert art_rule and "aspect-ratio: 1 / 1" in art_rule.group("body")
+    assert image_rule and "object-fit: contain" in image_rule.group("body")
+    assert "position: absolute" in image_rule.group("body")
+    assert "inset: 0" in image_rule.group("body")
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr))" in styles
+    item_properties = schema["properties"]["entries"]["items"]["properties"]
+    assert "layout" not in item_properties
+    assert "story" in schema["properties"]["entries"]["items"]["required"]
+    assert item_properties["aspectRatio"]["const"] == "1:1"
+    print("✓ Fantasy stays uncapped as a compact square gallery with separate reading views")
 
 
 def test_homepage_section_navigation_uses_existing_named_sections():

@@ -522,6 +522,133 @@ async function testMobileHomepageSectionsDoNotBecomeBlankRuns(browser, origin) {
   console.log('✓ Runtime: Below the Fold is visible immediately after On This Day on mobile');
 }
 
+async function testFantasyFramesStayUniform(browser, origin) {
+  const inspectViewport = async (viewport) => {
+    const context = await browser.newContext({ viewport });
+    const page = await context.newPage();
+    await page.goto(origin, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#fantasy .illustrated-fiction-slot__art');
+    await page.locator('#fantasy .illustrated-fiction-entry__art').scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => [...document.querySelectorAll('#fantasy img')].every((image) => image.complete && image.naturalWidth));
+
+    const state = await page.evaluate(() => {
+      const fantasy = document.querySelector('#fantasy');
+      const grid = fantasy.querySelector('.home-illustrated-fiction__grid');
+      const cards = [...fantasy.querySelectorAll('.illustrated-fiction-slot')];
+      const frames = cards.map((card) => card.querySelector('.illustrated-fiction-slot__art'));
+      const dimensions = (nodes) => nodes.map((node) => {
+        const rect = node.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      });
+      const image = fantasy.querySelector('.illustrated-fiction-entry__art img');
+      const imageRect = image?.getBoundingClientRect();
+      return {
+        cardWidths: dimensions(cards).map(({ width }) => width),
+        frameDimensions: dimensions(frames),
+        gridTrackCount: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+        galleryHeight: grid.getBoundingClientRect().height,
+        galleryText: grid.textContent.replace(/\s+/g, ' ').trim(),
+        variantClasses: cards.flatMap((card) => [...card.classList].filter((name) => name.startsWith('illustrated-fiction-slot--'))),
+        image: image ? {
+          src: image.getAttribute('src'),
+          naturalWidth: image.naturalWidth,
+          naturalHeight: image.naturalHeight,
+          width: imageRect.width,
+          height: imageRect.height,
+          objectFit: getComputedStyle(image).objectFit,
+          artOverflow: getComputedStyle(image.closest('.illustrated-fiction-entry__art')).overflow,
+        } : null,
+        horizontalOverflow: document.body.scrollWidth > document.body.clientWidth,
+      };
+    });
+    await context.close();
+    return state;
+  };
+
+  const desktop = await inspectViewport({ width: 1440, height: 1000 });
+  const mobile = await inspectViewport({ width: 390, height: 844 });
+  for (const [name, state] of Object.entries({ desktop, mobile })) {
+    const framesEqual = state.frameDimensions.every((frame) => (
+      Math.abs(frame.width - state.frameDimensions[0].width) < 1
+      && Math.abs(frame.height - state.frameDimensions[0].height) < 1
+    ));
+    assert(framesEqual, `Fantasy illustration frames are not uniform on ${name}`);
+    assert(state.cardWidths.every((width) => Math.abs(width - state.cardWidths[0]) < 1), `Fantasy entries do not share one gallery width on ${name}`);
+    assert(state.frameDimensions.every((frame) => Math.abs((frame.width / frame.height) - 1) < 0.01), `Fantasy frames are not square on ${name}`);
+    assert(state.gridTrackCount === (name === 'desktop' ? 3 : 2), `Fantasy is not a compact multi-column gallery on ${name}`);
+    assert(state.variantClasses.length === 0, `Fantasy still renders variable layout classes on ${name}`);
+    assert(state.image?.src === 'assets/illustrated-fiction/medusa.png', `Medusa image is missing on ${name}`);
+    assert(state.image?.naturalWidth === 1024 && state.image?.naturalHeight === 1024, `Medusa source is not the supplied square image on ${name}`);
+    assert(state.image?.objectFit === 'contain', `Medusa is cropped instead of contained on ${name}`);
+    assert(state.image?.artOverflow === 'visible', `Fantasy art is clipped on ${name}`);
+    assert(Math.abs(state.image.width - state.frameDimensions[0].width) < 1.1 && Math.abs(state.image.height - state.frameDimensions[0].height) < 1.1, `Medusa image box does not match its contained frame on ${name}`);
+    assert(!state.galleryText.includes(ILLUSTRATED_FICTION_ENTRIES[0].story[0]), `Fantasy homepage leaks the full Medusa story on ${name}`);
+    assert(!state.horizontalOverflow, `Fantasy gallery overflows horizontally on ${name}`);
+  }
+  assert(desktop.frameDimensions[0].width > 350 && desktop.galleryHeight < 1300, 'Fantasy desktop gallery is not compact enough for five entries');
+  assert(mobile.frameDimensions[0].width > 150 && mobile.galleryHeight < 1200, 'Fantasy mobile gallery is not compact enough for five entries');
+  console.log('✓ Runtime: Fantasy is a compact square gallery with full, uncropped art on desktop and mobile');
+}
+
+async function testFantasyEntryOpensReadingView(browser, origin) {
+  for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport });
+    const page = await context.newPage();
+    await page.goto(origin, { waitUntil: 'domcontentloaded' });
+    await page.locator('#fantasy .illustrated-fiction-entry__link').scrollIntoViewIfNeeded();
+    await page.locator('#fantasy .illustrated-fiction-entry__link').click();
+    await page.waitForURL('**/fantasy-medusa.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => {
+      const image = document.querySelector('.fantasy-reading__art img');
+      return image?.complete && image.naturalWidth;
+    });
+    const state = await page.evaluate(() => {
+      const art = document.querySelector('.fantasy-reading__art');
+      const image = art.querySelector('img');
+      const story = document.querySelector('.fantasy-reading__story');
+      const artRect = art.getBoundingClientRect();
+      const imageRect = image.getBoundingClientRect();
+      const storyRect = story.getBoundingClientRect();
+      return {
+        title: document.querySelector('.fantasy-reading__header h1')?.textContent.trim(),
+        introLabels: document.querySelectorAll('.fantasy-reading__header .eyebrow').length,
+        art: {
+          width: artRect.width,
+          height: artRect.height,
+          contentWidth: art.clientWidth,
+          contentHeight: art.clientHeight,
+          bottom: artRect.bottom,
+        },
+        image: {
+          width: imageRect.width,
+          height: imageRect.height,
+          naturalWidth: image.naturalWidth,
+          naturalHeight: image.naturalHeight,
+          objectFit: getComputedStyle(image).objectFit,
+        },
+        storyTop: storyRect.top,
+        storyBackground: getComputedStyle(story).backgroundImage,
+        bodyBackground: getComputedStyle(document.body).backgroundImage,
+        paragraphs: story.querySelectorAll('p').length,
+        bodyOverflow: document.body.scrollWidth > document.body.clientWidth,
+      };
+    });
+    assert(state.title === 'Medusa', 'Fantasy reading view lost the literal Medusa title');
+    assert(state.introLabels === 0, 'Fantasy reading view retained an explanatory intro line');
+    assert(state.art.bottom < state.storyTop, 'Fantasy reading view does not place the complete story below the artwork');
+    assert(Math.abs(state.art.width - state.art.height) < 1.1, 'Fantasy reading artwork is not square');
+    assert(Math.abs(state.image.width - state.art.contentWidth) < 1.1 && Math.abs(state.image.height - state.art.contentHeight) < 1.1, 'Medusa does not fill the reading frame edge-to-edge');
+    assert(state.image.naturalWidth === 1024 && state.image.naturalHeight === 1024, 'Reading view does not use the supplied square Medusa image');
+    assert(state.image.objectFit === 'contain', 'Reading view crops the Medusa image');
+    assert(state.paragraphs === ILLUSTRATED_FICTION_ENTRIES[0].story.length, 'Reading view does not contain the complete Medusa story');
+    assert(state.storyBackground === 'none' && state.bodyBackground === 'none', 'Fantasy reading view retained a ruled-paper background treatment');
+    assert(!state.bodyOverflow, 'Fantasy reading view overflows horizontally');
+    assert(state.art.width > (viewport.width > 1000 ? 900 : 340), 'Fantasy reading artwork is not large enough');
+    await context.close();
+  }
+  console.log('✓ Runtime: clicking Medusa opens a large-art reading view with the complete story below');
+}
+
 async function testHomepageSectionNavigation(browser, origin) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -558,7 +685,7 @@ async function testHomepageSectionNavigation(browser, origin) {
       const target = document.querySelector(targetHref);
       const current = document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href');
       const top = target?.getBoundingClientRect().top;
-      return location.hash === targetHref && current === targetHref && top >= 0 && top < 90;
+      return location.hash === targetHref && current === targetHref && Math.abs(top - 64) < 1.5;
     }, href);
     const jump = await page.evaluate(() => ({
       hash: location.hash,
@@ -574,7 +701,7 @@ async function testHomepageSectionNavigation(browser, origin) {
   await page.locator('.home-section-nav a[href="#front-page"]').click();
   await page.waitForFunction(() => (
     document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href') === '#front-page'
-    && document.querySelector('#front-page').getBoundingClientRect().top < 90
+    && Math.abs(document.querySelector('#front-page').getBoundingClientRect().top - 64) < 1.5
   ));
   const fantasyTop = await page.locator('#fantasy').evaluate((target) => target.getBoundingClientRect().top + document.body.scrollTop);
   await page.locator('.home-section-nav a[href="#fantasy"]').click();
@@ -583,8 +710,9 @@ async function testHomepageSectionNavigation(browser, origin) {
   assert(animatedPosition > 0 && animatedPosition < fantasyTop - 50, 'Fantasy jump did not visibly animate through the page');
   await page.waitForFunction(() => (
     document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href') === '#fantasy'
-    && document.querySelector('#fantasy').getBoundingClientRect().top < 90
+    && Math.abs(document.querySelector('#fantasy').getBoundingClientRect().top - 64) < 1.5
   ));
+  await page.waitForTimeout(100);
   const animatedDestination = await page.evaluate(() => ({
     current: document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href'),
     top: document.querySelector('#fantasy').getBoundingClientRect().top,
@@ -599,8 +727,13 @@ async function testHomepageSectionNavigation(browser, origin) {
       body.scrollTo({ top: Math.max(0, absoluteTop - 64), behavior: 'auto' });
     }, href);
     await page.waitForTimeout(200);
-    const current = await page.locator('.home-section-nav a[aria-current="location"]').getAttribute('href');
-    assert(current === href, `${href} did not become current during position-based scrolling`);
+    const scrollState = await page.evaluate((targetHref) => ({
+      current: document.querySelector('.home-section-nav a[aria-current="location"]')?.getAttribute('href'),
+      scrollTop: document.body.scrollTop,
+      targetTop: document.querySelector(targetHref).getBoundingClientRect().top,
+      navBottom: document.querySelector('.home-section-nav').getBoundingClientRect().bottom,
+    }), href);
+    assert(scrollState.current === href, `${href} did not become current during position-based scrolling: ${JSON.stringify(scrollState)}`);
   }
 
   await context.close();
@@ -622,6 +755,8 @@ async function main() {
     await testKeyboardAndMouseKeepAccessibleLightbox(browser, server.origin);
     await testAllMobileHomepageHeroesKeepOneScrimAndTopAlignedArt(browser, server.origin);
     await testMobileHomepageSectionsDoNotBecomeBlankRuns(browser, server.origin);
+    await testFantasyFramesStayUniform(browser, server.origin);
+    await testFantasyEntryOpensReadingView(browser, server.origin);
     await testHomepageSectionNavigation(browser, server.origin);
   } finally {
     if (browser) await browser.close();

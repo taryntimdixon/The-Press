@@ -1,5 +1,28 @@
 {
   "$schema": "./illustrated-fiction.schema.json",
   "schemaVersion": 1,
-  "entries": []
+  "entries": [
+    {
+      "id": "medusa",
+      "title": "Medusa",
+      "image": "assets/illustrated-fiction/medusa.png",
+      "imageAlt": "Sepia-toned ink portrait of Medusa with coiling snakes woven through her hair.",
+      "aspectRatio": "1:1",
+      "href": "fantasy-medusa.html",
+      "teaser": "Perseus takes her head. He does not take her voice.",
+      "imageWidth": 1024,
+      "imageHeight": 1024,
+      "story": [
+        "The last thing Medusa heard before the blade was her youngest snake hissing, 'Left.' She turned left. Perseus was already on the right. Bronze flashed without a face behind it, the curved sword passed cold through her throat, and the floor struck her cheek with surprising gentleness. For one breath she smelled salt, iron, and the wild fennel her sister Stheno had crushed for supper. Then Perseus lifted her by the hair and put her in the dark.",
+        "She woke inside a goatskin sack while he was flying. Wind punched the leather. Winged sandals beat an uneven rhythm outside. Medusa had no lungs, yet she drew breath; no body, yet every snake on her head was alive and furious. One of them found a seam and bit Perseus through the tunic. He shouted, dropped twenty feet, recovered, and swore by Zeus. 'Wrong god,' Medusa said from the sack. His silence was so complete she could hear the sea below them. 'Athena sent you,' she added. It was not a question.",
+        "Behind them, Stheno and Euryale screamed across the island. They were immortal and could afford a long grief. Medusa, the only mortal Gorgon, had always been the sister who counted hours, mended nets, remembered when the figs would turn. Now her sisters hunted a man hidden beneath Hades' cap while two newborn creatures rose from the blood at her severed neck: Pegasus striking sparks from the rocks, Chrysaor lifting a golden blade to the dawn. Medusa felt both sons leave the world through a door she could not follow. 'Fly faster,' she told Perseus. 'My sisters have your scent.'",
+        "He flew faster. The sack swung against his hip. Through the snakes, Medusa tasted the old bronze of Athena's shield and remembered the goddess arriving at her temple after Poseidon had gone. Athena had carried the same stillness then: not mercy, not rage, but the hard attention of someone deciding where to place a weapon. Medusa remembered her own hair falling across her shoulders. She remembered the first hiss close to her ear. She had screamed. Then one snake had whispered her name, and she had stopped.",
+        "At the coast of Ethiopia, Perseus saw a woman chained to a black rock and forgot his hurry. Andromeda stood above a boiling sea while her mother's court watched from the cliffs in ceremonial silence. The monster below was all jaw, barnacled spine, and ancient appetite. 'Put me down,' Medusa said. Perseus gripped the sack. 'I know what happens when I do.' 'So does the monster.' When Cetus lunged from the water, Perseus drew Medusa into the sun. She opened her eyes. The creature became a mountain of stone before its teeth reached Andromeda's feet, and the broken wave fell around it in silver sheets.",
+        "Perseus cut the chains. Andromeda did not look at the head in his hand; she looked at Medusa's snakes, who were arguing over which of them had frightened the monster first. 'Was that you?' Andromeda asked. Perseus began to answer. 'Yes,' Medusa said. Andromeda nodded once, as if a speaking Gorgon were merely the fourth impossible thing she had endured that morning. She wrapped the goatskin around Medusa herself, careful of the fangs. Perseus watched her do it and, for the first time, held the sack as though someone were inside.",
+        "They reached Seriphos at night. King Polydectes was feasting with the men who had helped him corner Danaë, Perseus's mother, and drive her to Athena's altar. The hall smelled of lamb fat, spilled wine, and confidence. Polydectes laughed when Perseus entered. 'You promised me the Gorgon's head.' Perseus set the sack on the table. 'I keep my promises.' Medusa heard benches scrape. She heard one servant dive beneath a table and another man whisper a prayer too late. When the goatskin fell away, she opened her eyes only as wide as she chose.",
+        "Stone traveled through the hall faster than fire. Polydectes hardened with his cup halfway to his mouth. His friends froze reaching for swords, doors, one another. A musician became marble around a final silent note. Medusa spared the servants, Danaë, the fisherman Dictys, and a dog asleep beside the hearth. The dog woke, inspected the new statues, and lifted its leg against the king. One of Medusa's snakes laughed so hard it bit another.",
+        "Athena came for her before sunrise. The goddess took the head from Perseus and fixed it to her aegis with hands that had never trembled. 'Your power will guard cities,' Athena said. Medusa felt the weight of divine armor beneath her and the snakes coiling comfortably around its rim. Far below, Perseus and Andromeda walked toward the harbor. Stheno and Euryale still called across the sea. Athena raised the shield, certain the gaze upon it belonged to her. Medusa closed her eyes. A moment later, when she was ready, she opened them again."
+      ]
+    }
+  ]
 }

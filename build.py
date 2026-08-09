@@ -927,16 +927,6 @@ def section_stories(section_slug: str) -> list[dict]:
 
 
 ILLUSTRATED_FICTION_INITIAL_SLOT_COUNT = 5
-ILLUSTRATED_FICTION_LAYOUT_SEQUENCE = (
-    "lead",
-    "standard",
-    "standard",
-    "wide",
-    "wide",
-    "standard",
-    "standard",
-    "wide",
-)
 
 
 def load_illustrated_fiction_entries() -> list[dict]:
@@ -948,7 +938,7 @@ def load_illustrated_fiction_entries() -> list[dict]:
     entries = payload.get("entries", [])
     if not isinstance(entries, list):
         raise ValueError("Illustrated-fiction registry entries must be a list")
-    required = ("id", "title", "image", "imageAlt", "excerpt")
+    required = ("id", "title", "image", "imageAlt", "aspectRatio", "href", "teaser")
     seen_ids: set[str] = set()
     for position, entry in enumerate(entries, start=1):
         if not isinstance(entry, dict):
@@ -956,21 +946,21 @@ def load_illustrated_fiction_entries() -> list[dict]:
         missing = [field for field in required if not str(entry.get(field) or "").strip()]
         if missing:
             raise ValueError(f"Illustrated-fiction entry {position} is missing: {', '.join(missing)}")
+        story = entry.get("story")
+        if not isinstance(story, list) or not story or any(not str(paragraph).strip() for paragraph in story):
+            raise ValueError(f"Illustrated-fiction entry {position} must include a non-empty story paragraph list")
+        if entry["aspectRatio"] != "1:1":
+            raise ValueError(f"Illustrated-fiction entry {position} must use the shared 1:1 image ratio")
+        if entry.get("imageWidth") and entry.get("imageHeight") and entry["imageWidth"] != entry["imageHeight"]:
+            raise ValueError(f"Illustrated-fiction entry {position} image dimensions must be square")
         entry_id = str(entry["id"]).strip()
         if entry_id in seen_ids:
             raise ValueError(f"Duplicate illustrated-fiction entry id: {entry_id}")
         seen_ids.add(entry_id)
-        layout = str(entry.get("layout") or "").strip()
-        if layout and layout not in {"lead", "standard", "wide"}:
-            raise ValueError(f"Illustrated-fiction entry {entry_id} has unsupported layout: {layout}")
     return entries
 
 
 ILLUSTRATED_FICTION_ENTRIES = load_illustrated_fiction_entries()
-
-
-def illustrated_fiction_layout(index: int) -> str:
-    return ILLUSTRATED_FICTION_LAYOUT_SEQUENCE[index % len(ILLUSTRATED_FICTION_LAYOUT_SEQUENCE)]
 
 
 def related_stories(story: dict) -> list[dict]:
@@ -1033,9 +1023,8 @@ def recency_ticker_item(story: dict, duplicate: bool = False) -> str:
 
 def illustrated_fiction_slot(index: int) -> str:
     slot_number = index + 1
-    layout = illustrated_fiction_layout(index)
     return f"""
-      <article class="illustrated-fiction-slot illustrated-fiction-slot--{h(layout)}" data-illustrated-fiction-slot="{slot_number}" aria-hidden="true">
+      <article class="illustrated-fiction-slot" data-illustrated-fiction-slot="{slot_number}" aria-hidden="true">
         <div class="illustrated-fiction-slot__art" data-art-status="awaiting-user-art">
           <span class="illustrated-fiction-slot__target" aria-hidden="true"></span>
         </div>
@@ -1049,34 +1038,29 @@ def illustrated_fiction_slot(index: int) -> str:
 """.strip()
 
 
-def illustrated_fiction_entry(entry: dict, index: int) -> str:
-    layout = str(entry.get("layout") or illustrated_fiction_layout(index))
+def illustrated_fiction_entry(entry: dict) -> str:
     entry_id = str(entry["id"])
-    href = str(entry.get("href") or "").strip()
-    title = h(entry["title"])
-    title_markup = f'<a href="{h(href)}">{title}</a>' if href else title
+    href = str(entry["href"]).strip()
     image_width = f' width="{h(entry["imageWidth"])}"' if entry.get("imageWidth") else ""
     image_height = f' height="{h(entry["imageHeight"])}"' if entry.get("imageHeight") else ""
-    format_markup = f'<p class="illustrated-fiction-entry__format">{h(entry["format"])}</p>' if entry.get("format") else ""
-    date_markup = f'<p class="illustrated-fiction-entry__date">{h(entry["publishedLabel"])}</p>' if entry.get("publishedLabel") else ""
     return f"""
-      <article class="illustrated-fiction-slot illustrated-fiction-slot--{h(layout)} illustrated-fiction-entry" data-illustrated-fiction-entry="{h(entry_id)}">
-        <div class="illustrated-fiction-slot__art illustrated-fiction-entry__art">
-          <img src="{h(entry['image'])}" alt="{h(entry['imageAlt'])}" loading="lazy" decoding="async"{image_width}{image_height} />
-        </div>
-        <div class="illustrated-fiction-slot__body illustrated-fiction-entry__body">
-          {format_markup}
-          <h3>{title_markup}</h3>
-          <p class="illustrated-fiction-entry__excerpt">{h(entry['excerpt'])}</p>
-          {date_markup}
-        </div>
+      <article class="illustrated-fiction-slot illustrated-fiction-entry" data-illustrated-fiction-entry="{h(entry_id)}">
+        <a class="illustrated-fiction-entry__link" href="{h(href)}">
+          <div class="illustrated-fiction-slot__art illustrated-fiction-entry__art">
+            <img src="{h(entry['image'])}" alt="{h(entry['imageAlt'])}" loading="lazy" decoding="async"{image_width}{image_height} />
+          </div>
+          <div class="illustrated-fiction-slot__body illustrated-fiction-entry__body">
+            <h3>{h(entry['title'])}</h3>
+            <p class="illustrated-fiction-entry__teaser">{h(entry['teaser'])}</p>
+          </div>
+        </a>
       </article>
 """.strip()
 
 
 def render_home_illustrated_fiction(entries: list[dict] | None = None) -> str:
     archive_entries = ILLUSTRATED_FICTION_ENTRIES if entries is None else entries
-    cards = [illustrated_fiction_entry(entry, index) for index, entry in enumerate(archive_entries)]
+    cards = [illustrated_fiction_entry(entry) for entry in archive_entries]
     placeholder_total = max(ILLUSTRATED_FICTION_INITIAL_SLOT_COUNT, len(archive_entries))
     cards.extend(illustrated_fiction_slot(index) for index in range(len(archive_entries), placeholder_total))
     slots = "\n".join(cards)
@@ -1090,6 +1074,42 @@ def render_home_illustrated_fiction(entries: list[dict] | None = None) -> str:
     </div>
   </section>
 """.strip()
+
+
+def render_illustrated_fiction_story_page(entry: dict) -> str:
+    image_width = f' width="{h(entry["imageWidth"])}"' if entry.get("imageWidth") else ""
+    image_height = f' height="{h(entry["imageHeight"])}"' if entry.get("imageHeight") else ""
+    story_markup = "\n".join(f"        <p>{h(paragraph)}</p>" for paragraph in entry["story"])
+    main = f"""
+<main class="page fantasy-reading-page">
+  <article class="fantasy-reading" data-illustrated-fiction-reading="{h(entry['id'])}">
+    <header class="fantasy-reading__header">
+      <h1>{h(entry['title'])}</h1>
+    </header>
+    <figure class="fantasy-reading__art">
+      <img src="{h(entry['image'])}" alt="{h(entry['imageAlt'])}" decoding="async" fetchpriority="high"{image_width}{image_height} />
+    </figure>
+    <div class="fantasy-reading__story">
+{story_markup}
+    </div>
+    <p class="fantasy-reading__return"><a href="index.html#fantasy">Back to Fantasy</a></p>
+  </article>
+</main>
+""".strip()
+    return layout(
+        f"{entry['title']} — {SITE['name']}",
+        entry["teaser"],
+        entry["href"],
+        "page-fantasy-story",
+        main,
+        include_progress=True,
+        social_image=entry["image"],
+        social_image_alt=entry["imageAlt"],
+        social_image_width=entry.get("imageWidth", ""),
+        social_image_height=entry.get("imageHeight", ""),
+        og_type="article",
+        extra_links=f'<link rel="stylesheet" href="homepage.css?v={h(asset_version("homepage.css"))}" />',
+    )
 
 
 BELOW_FOLD_REMOTE_DIMS = {
@@ -3648,6 +3668,7 @@ def render_sitemap() -> str:
     urls += [section["filename"] for section in SECTIONS]
     urls += below_fold_sitemap_paths()
     urls += [story["filename"] for story in STORIES]
+    urls += [entry["href"] for entry in ILLUSTRATED_FICTION_ENTRIES]
     urlset = []
     for path in urls:
         story = STORY_BY_FILE.get(path)
@@ -3757,6 +3778,8 @@ def build() -> None:
             "PRESS_ALLOW_LEGACY_MASTER_BUILD=1 if you intentionally want the older master-only rebuild."
         )
     write_file(SITE_DIR / "index.html", render_homepage())
+    for entry in ILLUSTRATED_FICTION_ENTRIES:
+        write_file(SITE_DIR / entry["href"], render_illustrated_fiction_story_page(entry))
     write_file(SITE_DIR / "archive.html", render_archive())
     write_file(SITE_DIR / "gallery.html", render_gallery())
     write_file(SITE_DIR / "authors.html", render_authors())

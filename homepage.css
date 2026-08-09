@@ -1096,39 +1096,31 @@ body.page-home .home-illustrated-fiction__head h2 {
 
 body.page-home .home-illustrated-fiction__grid {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 1rem;
-  padding-top: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: clamp(0.9rem, 1.8vw, 1.5rem);
+  padding-top: clamp(1rem, 2vw, 1.5rem);
 }
 
 body.page-home .illustrated-fiction-slot {
   display: grid;
+  grid-template-rows: auto 1fr;
+  width: 100%;
+  height: 100%;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid rgba(18, 17, 15, 0.72);
+  border: 2px solid rgba(18, 17, 15, 0.84);
   background: var(--tm-paper-bright);
   color: var(--tm-ink);
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.3);
-}
-
-body.page-home .illustrated-fiction-slot--lead {
-  grid-column: span 7;
-  grid-row: span 2;
-}
-
-body.page-home .illustrated-fiction-slot--standard {
-  grid-column: span 5;
-}
-
-body.page-home .illustrated-fiction-slot--wide {
-  grid-column: span 6;
-  grid-template-columns: minmax(0, 0.9fr) minmax(16rem, 1.1fr);
+  box-shadow: 8px 9px 0 rgba(0, 0, 0, 0.38);
 }
 
 body.page-home .illustrated-fiction-slot__art {
   position: relative;
   display: grid;
-  min-height: 13.5rem;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
   place-content: center;
   overflow: hidden;
   border-bottom: 1px solid var(--tm-ink);
@@ -1140,16 +1132,6 @@ body.page-home .illustrated-fiction-slot__art {
     var(--if-blue);
   color: var(--tm-paper-bright);
   text-align: center;
-}
-
-body.page-home .illustrated-fiction-slot--lead .illustrated-fiction-slot__art {
-  min-height: 31rem;
-}
-
-body.page-home .illustrated-fiction-slot--wide .illustrated-fiction-slot__art {
-  min-height: 17rem;
-  border-right: 1px solid var(--tm-ink);
-  border-bottom: 0;
 }
 
 body.page-home .illustrated-fiction-slot:nth-child(5n + 2) .illustrated-fiction-slot__art {
@@ -1203,8 +1185,8 @@ body.page-home .illustrated-fiction-slot__body {
   flex-direction: column;
   gap: 0.62rem;
   justify-content: center;
-  min-height: 10.5rem;
-  padding: clamp(0.95rem, 1.6vw, 1.35rem);
+  min-height: 7.2rem;
+  padding: clamp(0.8rem, 1.3vw, 1.05rem);
 }
 
 body.page-home .illustrated-fiction-slot__skeleton {
@@ -1235,66 +1217,134 @@ body.page-home .illustrated-fiction-slot__skeleton--short {
 
 body.page-home .illustrated-fiction-entry__art {
   place-content: stretch;
+  overflow: visible;
+  background: #ead1bf;
+}
+
+body.page-home .illustrated-fiction-entry {
+  overflow: visible;
+}
+
+body.page-home .illustrated-fiction-entry__link {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
 }
 
 body.page-home .illustrated-fiction-entry__art img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  min-height: inherit;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
 
 body.page-home .illustrated-fiction-entry__body {
-  justify-content: flex-start;
-}
-
-body.page-home .illustrated-fiction-entry__format,
-body.page-home .illustrated-fiction-entry__date {
-  margin: 0;
-  color: var(--tm-signal-deep);
-  font: 700 0.61rem/1.2 var(--tm-code);
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+  display: flex;
+  min-height: 7.2rem;
+  padding: clamp(0.8rem, 1.3vw, 1.05rem);
+  background: var(--tm-paper-bright);
 }
 
 body.page-home .illustrated-fiction-entry__body h3 {
   margin: 0;
-  font: 800 clamp(1.45rem, 2.35vw, 2.4rem)/0.98 var(--tm-display);
-  letter-spacing: -0.035em;
+  font: 900 clamp(1.75rem, 3vw, 3rem)/0.88 var(--tm-display);
+  letter-spacing: -0.045em;
 }
 
-body.page-home .illustrated-fiction-entry__body h3 a {
-  color: inherit;
-}
-
-body.page-home .illustrated-fiction-entry__excerpt {
+body.page-home .illustrated-fiction-entry__teaser {
   margin: 0;
   color: #4f4a44;
-  font-size: 0.93rem;
-  line-height: 1.45;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.82rem, 1.05vw, 0.96rem);
+  line-height: 1.35;
 }
 
 @media (max-width: 62rem) {
-  body.page-home .illustrated-fiction-slot--lead,
-  body.page-home .illustrated-fiction-slot--standard,
-  body.page-home .illustrated-fiction-slot--wide {
-    grid-column: span 6;
-    grid-row: auto;
+  body.page-home .home-illustrated-fiction__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
-  body.page-home .illustrated-fiction-slot--lead {
-    grid-column: 1 / -1;
-  }
+body.page-fantasy-story {
+  background: #f2eee4;
+  color: #12110f;
+}
 
-  body.page-home .illustrated-fiction-slot--wide {
-    grid-template-columns: 1fr;
-  }
+body.page-fantasy-story .fantasy-reading-page {
+  width: min(calc(100% - 2rem), 76rem);
+  margin-inline: auto;
+  padding-block: clamp(2rem, 5vw, 5rem);
+}
 
-  body.page-home .illustrated-fiction-slot--wide .illustrated-fiction-slot__art {
-    border-right: 0;
-    border-bottom: 1px solid var(--tm-ink);
-  }
+body.page-fantasy-story .fantasy-reading__header,
+body.page-fantasy-story .fantasy-reading__art {
+  width: min(100%, 64rem);
+  margin-inline: auto;
+}
+
+body.page-fantasy-story .fantasy-reading__header {
+  margin-bottom: clamp(1rem, 2vw, 1.75rem);
+}
+
+body.page-fantasy-story .fantasy-reading__header h1 {
+  margin: 0;
+  font: 900 clamp(4.5rem, 11vw, 9rem)/0.78 "Playfair Display", Georgia, serif;
+  letter-spacing: -0.07em;
+}
+
+body.page-fantasy-story .fantasy-reading__art {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  margin-block: 0;
+  border: 2px solid #12110f;
+  background: #ead1bf;
+  box-shadow: 12px 14px 0 #12110f;
+}
+
+body.page-fantasy-story .fantasy-reading__art img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+body.page-fantasy-story .fantasy-reading__story {
+  width: min(100%, 48rem);
+  margin: clamp(3rem, 7vw, 6rem) auto 0;
+  color: #37332f;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font: clamp(1.08rem, 1.7vw, 1.28rem)/1.72 Georgia, "Times New Roman", serif;
+}
+
+body.page-fantasy-story .fantasy-reading__story p {
+  margin: 0 0 1.35em;
+}
+
+body.page-fantasy-story .fantasy-reading__story p:first-child::first-letter {
+  float: left;
+  margin: 0.06em 0.12em 0 0;
+  color: #a8221d;
+  font: 900 4em/0.72 "Playfair Display", Georgia, serif;
+}
+
+body.page-fantasy-story .fantasy-reading__return {
+  width: min(100%, 48rem);
+  margin: 2.5rem auto 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(18, 17, 15, 0.34);
+  font: 700 0.72rem/1.2 "Space Mono", ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 body.page-home .site-footer {
@@ -1667,21 +1717,42 @@ body.page-home :focus-visible {
   }
 
   body.page-home .home-illustrated-fiction__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  body.page-home .illustrated-fiction-slot {
+    box-shadow: 4px 5px 0 rgba(0, 0, 0, 0.38);
+  }
+
+  body.page-home .illustrated-fiction-entry__body {
+    min-height: 6.5rem;
+    gap: 0.42rem;
+    padding: 0.72rem;
+  }
+
+  body.page-home .illustrated-fiction-entry__body h3 {
+    font-size: clamp(1.45rem, 8vw, 2rem);
+  }
+
+  body.page-home .illustrated-fiction-entry__teaser {
+    font-size: 0.78rem;
+  }
+
+  body.page-fantasy-story .fantasy-reading-page {
+    width: min(calc(100% - 1.2rem), 76rem);
+  }
+
+  body.page-fantasy-story .fantasy-reading__art {
+    box-shadow: 5px 6px 0 #12110f;
+  }
+
+}
+
+@media (max-width: 23rem) {
+  body.page-home .home-illustrated-fiction__grid {
     grid-template-columns: 1fr;
   }
-
-  body.page-home .illustrated-fiction-slot--lead,
-  body.page-home .illustrated-fiction-slot--standard,
-  body.page-home .illustrated-fiction-slot--wide {
-    grid-column: 1;
-  }
-
-  body.page-home .illustrated-fiction-slot--lead .illustrated-fiction-slot__art,
-  body.page-home .illustrated-fiction-slot__art,
-  body.page-home .illustrated-fiction-slot--wide .illustrated-fiction-slot__art {
-    min-height: 16rem;
-  }
-
 }
 
 @media (prefers-reduced-motion: reduce) {
