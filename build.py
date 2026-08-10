@@ -1082,6 +1082,12 @@ def render_illustrated_fiction_story_page(entry: dict) -> str:
     story_markup = "\n".join(f"        <p>{h(paragraph)}</p>" for paragraph in entry["story"])
     main = f"""
 <main class="page fantasy-reading-page">
+  <nav class="home-section-nav fantasy-reading__nav" aria-label="Fantasy navigation">
+    <div class="home-section-nav__links">
+      <a href="index.html">Front Page</a>
+      <a href="index.html#fantasy" aria-current="location">Fantasy</a>
+    </div>
+  </nav>
   <article class="fantasy-reading" data-illustrated-fiction-reading="{h(entry['id'])}">
     <header class="fantasy-reading__header">
       <h1>{h(entry['title'])}</h1>
@@ -1100,7 +1106,7 @@ def render_illustrated_fiction_story_page(entry: dict) -> str:
         f"{entry['title']} — {SITE['name']}",
         entry["teaser"],
         entry["href"],
-        "page-fantasy-story",
+        "page-fantasy-story press-front-system",
         main,
         include_progress=True,
         social_image=entry["image"],
@@ -3103,7 +3109,7 @@ def render_homepage() -> str:
         f"{SITE['name']} — Front Page",
         SITE["description"],
         "",
-        "page-home",
+        "page-home press-front-system",
         main,
         jsonld=jsonld_org(),
         social_image="assets/the-press-front-page-share-card.png",

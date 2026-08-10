@@ -145,6 +145,9 @@ def test_illustrated_fiction_framework_replaces_cartoon_desk():
     assert section.count('data-art-status="awaiting-user-art"') == expected_placeholders
     assert section.count("<img") == len(registry_entries)
     assert section.count('<h2 id="fantasy-title">Fantasy</h2>') == 1
+    assert '<body class="page-home press-front-system">' in index
+    assert "body.press-front-system .site-header" in styles
+    assert "body.press-front-system .home-section-nav" in styles
     assert "Drawn Worlds" not in section
     assert "section-cartoons.html" not in section
     visible_text = re.sub(r"<[^>]+>", "", section).strip()
@@ -159,7 +162,11 @@ def test_illustrated_fiction_framework_replaces_cartoon_desk():
             assert entry["teaser"] in section
             assert all(paragraph not in section for paragraph in entry["story"])
             reading_page = source(ROOT / entry["href"])
+            assert '<body class="page-fantasy-story press-front-system">' in reading_page
             assert f'data-illustrated-fiction-reading="{entry["id"]}"' in reading_page
+            assert '<nav class="home-section-nav fantasy-reading__nav"' in reading_page
+            assert 'href="index.html">Front Page</a>' in reading_page
+            assert 'href="index.html#fantasy" aria-current="location">Fantasy</a>' in reading_page
             escaped_story = [html.escape(paragraph, quote=True) for paragraph in entry["story"]]
             assert reading_page.index(f'src="{entry["image"]}"') < reading_page.index(escaped_story[0])
             assert all(paragraph in reading_page for paragraph in escaped_story)

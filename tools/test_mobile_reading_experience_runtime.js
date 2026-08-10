@@ -672,6 +672,128 @@ async function testFantasyEntryOpensReadingView(browser, origin) {
   console.log('✓ Runtime: every Fantasy card opens a large-art reading view with its complete story below');
 }
 
+async function testFantasyReadingHeaderMatchesHomepage(browser, origin) {
+  const profiles = [
+    { label: 'desktop', viewport: { width: 1440, height: 1000 } },
+    { label: 'mobile', viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true },
+  ];
+
+  for (const { label, ...contextOptions } of profiles) {
+    const context = await browser.newContext(contextOptions);
+    const inspect = async (pathname, readingPage) => {
+      const page = await context.newPage();
+      await page.goto(`${origin}${pathname}`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.press-live-clock');
+      await page.waitForSelector(readingPage ? '.fantasy-reading__nav' : '.home-section-nav');
+      if (!readingPage) {
+        await page.locator('.home-section-nav a[href="#fantasy"]').click();
+        await page.waitForSelector('.home-section-nav a[href="#fantasy"][aria-current="location"]');
+      }
+      const state = await page.evaluate((isReadingPage) => {
+        const style = (element, pseudo = null) => {
+          const computed = getComputedStyle(element, pseudo);
+          return {
+            backgroundColor: computed.backgroundColor,
+            color: computed.color,
+            borderColor: computed.borderColor,
+            boxShadow: computed.boxShadow,
+            fontFamily: computed.fontFamily,
+            fontWeight: computed.fontWeight,
+            letterSpacing: computed.letterSpacing,
+            textTransform: computed.textTransform,
+          };
+        };
+        const header = document.querySelector('.site-header');
+        const row = document.querySelector('.masthead-row');
+        const logo = document.querySelector('.masthead-logo').getBoundingClientRect();
+        const clock = document.querySelector('.press-live-clock');
+        const control = document.querySelector('.search-trigger');
+        const utility = document.querySelector('.utility-link');
+        const ticker = document.querySelector('.masthead-ticker');
+        const nav = document.querySelector('.home-section-nav');
+        const active = nav.querySelector('[aria-current="location"]');
+        const headline = document.querySelector(isReadingPage ? '.fantasy-reading__header h1' : '.lead-panel.is-active h2');
+        const headerBox = header.getBoundingClientRect();
+        const navBox = nav.getBoundingClientRect();
+        const navStyle = getComputedStyle(nav);
+        const headlineStyle = getComputedStyle(headline);
+        const headerStripStyle = getComputedStyle(header, '::before');
+        const readingHeaderStyle = isReadingPage
+          ? getComputedStyle(document.querySelector('.fantasy-reading__header'))
+          : null;
+        const activeMarkerStyle = getComputedStyle(active, '::after');
+        return {
+          hasSharedClass: document.body.classList.contains('press-front-system'),
+          header: style(header),
+          headerStrip: {
+            content: headerStripStyle.content,
+            backgroundColor: headerStripStyle.backgroundColor,
+            color: headerStripStyle.color,
+            fontFamily: headerStripStyle.fontFamily,
+          },
+          headerBox: { width: headerBox.width, height: headerBox.height },
+          rowAreas: getComputedStyle(row).gridTemplateAreas,
+          logo: { width: logo.width, height: logo.height },
+          clock: style(clock),
+          control: style(control),
+          utility: style(utility),
+          ticker: style(ticker),
+          nav: {
+            position: navStyle.position,
+            backgroundColor: navStyle.backgroundColor,
+            borderLeftWidth: navStyle.borderLeftWidth,
+            boxShadow: navStyle.boxShadow,
+          },
+          navBox: { x: navBox.x, width: navBox.width },
+          active: style(active),
+          activeMarker: {
+            content: activeMarkerStyle.content,
+            backgroundColor: activeMarkerStyle.backgroundColor,
+            height: activeMarkerStyle.height,
+            position: activeMarkerStyle.position,
+          },
+          headline: {
+            fontFamily: headlineStyle.fontFamily,
+          },
+          readingHero: isReadingPage ? {
+            borderTopWidth: readingHeaderStyle.borderTopWidth,
+            borderBottomWidth: readingHeaderStyle.borderBottomWidth,
+          } : null,
+        };
+      }, readingPage);
+      await page.close();
+      return state;
+    };
+
+    const homepage = await inspect('/', false);
+    for (const entry of ILLUSTRATED_FICTION_ENTRIES) {
+      const reading = await inspect(`/${entry.href}`, true);
+      assert(homepage.hasSharedClass && reading.hasSharedClass, `${entry.title} and the homepage do not share the front-system class on ${label}`);
+      for (const key of ['header', 'headerStrip', 'rowAreas', 'clock', 'control', 'utility', 'ticker', 'nav', 'active', 'activeMarker']) {
+        const homepageTreatment = JSON.stringify(homepage[key]);
+        const readingTreatment = JSON.stringify(reading[key]);
+        assert(homepageTreatment === readingTreatment, `${entry.title} reading ${key} treatment diverges from the homepage on ${label}: homepage=${homepageTreatment}; reading=${readingTreatment}`);
+      }
+      assert(
+        Math.abs(homepage.logo.width - reading.logo.width) < 1 && Math.abs(homepage.logo.height - reading.logo.height) < 1,
+        `${entry.title} masthead logo scale diverges from the homepage on ${label}: homepage=${JSON.stringify(homepage.logo)}; reading=${JSON.stringify(reading.logo)}`,
+      );
+      for (const boxKey of ['headerBox', 'navBox']) {
+        for (const property of Object.keys(homepage[boxKey])) {
+          assert(
+            Math.abs(homepage[boxKey][property] - reading[boxKey][property]) < 1,
+            `${entry.title} reading ${boxKey}.${property} diverges from the homepage on ${label}: homepage=${homepage[boxKey][property]}; reading=${reading[boxKey][property]}`,
+          );
+        }
+      }
+      assert(homepage.headline.fontFamily === reading.headline.fontFamily, `${entry.title} reading title lost the homepage display typeface on ${label}`);
+      assert(reading.readingHero.borderTopWidth === '7px' && reading.readingHero.borderBottomWidth === '1px', `${entry.title} reading hero lost the Press signal-rule treatment on ${label}`);
+    }
+    await context.close();
+  }
+  console.log('✓ Runtime: every Fantasy reading header, navigation, and hero language match the homepage on desktop and mobile');
+}
+
 async function testHomepageSectionNavigation(browser, origin) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -780,6 +902,7 @@ async function main() {
     await testMobileHomepageSectionsDoNotBecomeBlankRuns(browser, server.origin);
     await testFantasyFramesStayUniform(browser, server.origin);
     await testFantasyEntryOpensReadingView(browser, server.origin);
+    await testFantasyReadingHeaderMatchesHomepage(browser, server.origin);
     await testHomepageSectionNavigation(browser, server.origin);
   } finally {
     if (browser) await browser.close();
