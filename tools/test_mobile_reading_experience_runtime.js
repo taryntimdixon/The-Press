@@ -528,7 +528,7 @@ async function testFantasyFramesStayUniform(browser, origin) {
     const page = await context.newPage();
     await page.goto(origin, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#fantasy .illustrated-fiction-slot__art');
-    await page.locator('#fantasy .illustrated-fiction-entry__art').scrollIntoViewIfNeeded();
+    await page.locator('#fantasy .illustrated-fiction-entry__art').first().scrollIntoViewIfNeeded();
     await page.waitForFunction(() => [...document.querySelectorAll('#fantasy img')].every((image) => image.complete && image.naturalWidth));
 
     const state = await page.evaluate(() => {
@@ -540,8 +540,7 @@ async function testFantasyFramesStayUniform(browser, origin) {
         const rect = node.getBoundingClientRect();
         return { width: rect.width, height: rect.height };
       });
-      const image = fantasy.querySelector('.illustrated-fiction-entry__art img');
-      const imageRect = image?.getBoundingClientRect();
+      const images = [...fantasy.querySelectorAll('.illustrated-fiction-entry__art img')];
       return {
         cardWidths: dimensions(cards).map(({ width }) => width),
         frameDimensions: dimensions(frames),
@@ -549,15 +548,18 @@ async function testFantasyFramesStayUniform(browser, origin) {
         galleryHeight: grid.getBoundingClientRect().height,
         galleryText: grid.textContent.replace(/\s+/g, ' ').trim(),
         variantClasses: cards.flatMap((card) => [...card.classList].filter((name) => name.startsWith('illustrated-fiction-slot--'))),
-        image: image ? {
-          src: image.getAttribute('src'),
-          naturalWidth: image.naturalWidth,
-          naturalHeight: image.naturalHeight,
-          width: imageRect.width,
-          height: imageRect.height,
-          objectFit: getComputedStyle(image).objectFit,
-          artOverflow: getComputedStyle(image.closest('.illustrated-fiction-entry__art')).overflow,
-        } : null,
+        images: images.map((image) => {
+          const imageRect = image.getBoundingClientRect();
+          return {
+            src: image.getAttribute('src'),
+            naturalWidth: image.naturalWidth,
+            naturalHeight: image.naturalHeight,
+            width: imageRect.width,
+            height: imageRect.height,
+            objectFit: getComputedStyle(image).objectFit,
+            artOverflow: getComputedStyle(image.closest('.illustrated-fiction-entry__art')).overflow,
+          };
+        }),
         horizontalOverflow: document.body.scrollWidth > document.body.clientWidth,
       };
     });
@@ -577,12 +579,19 @@ async function testFantasyFramesStayUniform(browser, origin) {
     assert(state.frameDimensions.every((frame) => Math.abs((frame.width / frame.height) - 1) < 0.01), `Fantasy frames are not square on ${name}`);
     assert(state.gridTrackCount === (name === 'desktop' ? 3 : 2), `Fantasy is not a compact multi-column gallery on ${name}`);
     assert(state.variantClasses.length === 0, `Fantasy still renders variable layout classes on ${name}`);
-    assert(state.image?.src === 'assets/illustrated-fiction/medusa.png', `Medusa image is missing on ${name}`);
-    assert(state.image?.naturalWidth === 1024 && state.image?.naturalHeight === 1024, `Medusa source is not the supplied square image on ${name}`);
-    assert(state.image?.objectFit === 'contain', `Medusa is cropped instead of contained on ${name}`);
-    assert(state.image?.artOverflow === 'visible', `Fantasy art is clipped on ${name}`);
-    assert(Math.abs(state.image.width - state.frameDimensions[0].width) < 1.1 && Math.abs(state.image.height - state.frameDimensions[0].height) < 1.1, `Medusa image box does not match its contained frame on ${name}`);
-    assert(!state.galleryText.includes(ILLUSTRATED_FICTION_ENTRIES[0].story[0]), `Fantasy homepage leaks the full Medusa story on ${name}`);
+    assert(state.images.length === ILLUSTRATED_FICTION_ENTRIES.length, `Fantasy image count diverges from the registry on ${name}`);
+    for (const [index, entry] of ILLUSTRATED_FICTION_ENTRIES.entries()) {
+      const image = state.images[index];
+      assert(image?.src === entry.image, `${entry.title} image is missing on ${name}`);
+      const dimensionsMatch = entry.imageWidth && entry.imageHeight
+        ? image?.naturalWidth === entry.imageWidth && image?.naturalHeight === entry.imageHeight
+        : image?.naturalWidth === image?.naturalHeight;
+      assert(dimensionsMatch, `${entry.title} source does not match its registered square dimensions on ${name}`);
+      assert(image?.objectFit === 'contain', `${entry.title} is cropped instead of contained on ${name}`);
+      assert(image?.artOverflow === 'visible', `${entry.title} art is clipped on ${name}`);
+      assert(Math.abs(image.width - state.frameDimensions[index].width) < 1.1 && Math.abs(image.height - state.frameDimensions[index].height) < 1.1, `${entry.title} image box does not match its contained frame on ${name}`);
+      assert(!state.galleryText.includes(entry.story[0]), `Fantasy homepage leaks the full ${entry.title} story on ${name}`);
+    }
     assert(!state.horizontalOverflow, `Fantasy gallery overflows horizontally on ${name}`);
   }
   assert(desktop.frameDimensions[0].width > 350 && desktop.galleryHeight < 1300, 'Fantasy desktop gallery is not compact enough for five entries');
@@ -594,59 +603,73 @@ async function testFantasyEntryOpensReadingView(browser, origin) {
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
     const context = await browser.newContext({ viewport });
     const page = await context.newPage();
-    await page.goto(origin, { waitUntil: 'domcontentloaded' });
-    await page.locator('#fantasy .illustrated-fiction-entry__link').scrollIntoViewIfNeeded();
-    await page.locator('#fantasy .illustrated-fiction-entry__link').click();
-    await page.waitForURL('**/fantasy-medusa.html', { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => {
-      const image = document.querySelector('.fantasy-reading__art img');
-      return image?.complete && image.naturalWidth;
-    });
-    const state = await page.evaluate(() => {
-      const art = document.querySelector('.fantasy-reading__art');
-      const image = art.querySelector('img');
-      const story = document.querySelector('.fantasy-reading__story');
-      const artRect = art.getBoundingClientRect();
-      const imageRect = image.getBoundingClientRect();
-      const storyRect = story.getBoundingClientRect();
-      return {
-        title: document.querySelector('.fantasy-reading__header h1')?.textContent.trim(),
-        introLabels: document.querySelectorAll('.fantasy-reading__header .eyebrow').length,
-        art: {
-          width: artRect.width,
-          height: artRect.height,
-          contentWidth: art.clientWidth,
-          contentHeight: art.clientHeight,
-          bottom: artRect.bottom,
-        },
-        image: {
-          width: imageRect.width,
-          height: imageRect.height,
-          naturalWidth: image.naturalWidth,
-          naturalHeight: image.naturalHeight,
-          objectFit: getComputedStyle(image).objectFit,
-        },
-        storyTop: storyRect.top,
-        storyBackground: getComputedStyle(story).backgroundImage,
-        bodyBackground: getComputedStyle(document.body).backgroundImage,
-        paragraphs: story.querySelectorAll('p').length,
-        bodyOverflow: document.body.scrollWidth > document.body.clientWidth,
-      };
-    });
-    assert(state.title === 'Medusa', 'Fantasy reading view lost the literal Medusa title');
-    assert(state.introLabels === 0, 'Fantasy reading view retained an explanatory intro line');
-    assert(state.art.bottom < state.storyTop, 'Fantasy reading view does not place the complete story below the artwork');
-    assert(Math.abs(state.art.width - state.art.height) < 1.1, 'Fantasy reading artwork is not square');
-    assert(Math.abs(state.image.width - state.art.contentWidth) < 1.1 && Math.abs(state.image.height - state.art.contentHeight) < 1.1, 'Medusa does not fill the reading frame edge-to-edge');
-    assert(state.image.naturalWidth === 1024 && state.image.naturalHeight === 1024, 'Reading view does not use the supplied square Medusa image');
-    assert(state.image.objectFit === 'contain', 'Reading view crops the Medusa image');
-    assert(state.paragraphs === ILLUSTRATED_FICTION_ENTRIES[0].story.length, 'Reading view does not contain the complete Medusa story');
-    assert(state.storyBackground === 'none' && state.bodyBackground === 'none', 'Fantasy reading view retained a ruled-paper background treatment');
-    assert(!state.bodyOverflow, 'Fantasy reading view overflows horizontally');
-    assert(state.art.width > (viewport.width > 1000 ? 900 : 340), 'Fantasy reading artwork is not large enough');
-    await context.close();
+    try {
+      await page.goto(origin, { waitUntil: 'domcontentloaded' });
+      for (const [index, entry] of ILLUSTRATED_FICTION_ENTRIES.entries()) {
+        const link = page.locator(`[data-illustrated-fiction-entry="${entry.id}"] .illustrated-fiction-entry__link`);
+        await link.scrollIntoViewIfNeeded();
+        await link.click();
+        await page.waitForURL(`**/${entry.href}`, { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(() => {
+          const image = document.querySelector('.fantasy-reading__art img');
+          return image?.complete && image.naturalWidth;
+        });
+        const state = await page.evaluate(() => {
+          const art = document.querySelector('.fantasy-reading__art');
+          const image = art.querySelector('img');
+          const story = document.querySelector('.fantasy-reading__story');
+          const artRect = art.getBoundingClientRect();
+          const imageRect = image.getBoundingClientRect();
+          const storyRect = story.getBoundingClientRect();
+          return {
+            title: document.querySelector('.fantasy-reading__header h1')?.textContent.trim(),
+            introLabels: document.querySelectorAll('.fantasy-reading__header .eyebrow').length,
+            art: {
+              width: artRect.width,
+              height: artRect.height,
+              contentWidth: art.clientWidth,
+              contentHeight: art.clientHeight,
+              bottom: artRect.bottom,
+            },
+            image: {
+              src: image.getAttribute('src'),
+              width: imageRect.width,
+              height: imageRect.height,
+              naturalWidth: image.naturalWidth,
+              naturalHeight: image.naturalHeight,
+              objectFit: getComputedStyle(image).objectFit,
+            },
+            storyTop: storyRect.top,
+            storyBackground: getComputedStyle(story).backgroundImage,
+            bodyBackground: getComputedStyle(document.body).backgroundImage,
+            paragraphs: story.querySelectorAll('p').length,
+            bodyOverflow: document.body.scrollWidth > document.body.clientWidth,
+          };
+        });
+        assert(state.title === entry.title, `Fantasy reading view lost the literal ${entry.title} title`);
+        assert(state.introLabels === 0, `${entry.title} retained an explanatory intro line`);
+        assert(state.art.bottom < state.storyTop, `${entry.title} does not place the complete story below the artwork`);
+        assert(Math.abs(state.art.width - state.art.height) < 1.1, `${entry.title} reading artwork is not square`);
+        assert(Math.abs(state.image.width - state.art.contentWidth) < 1.1 && Math.abs(state.image.height - state.art.contentHeight) < 1.1, `${entry.title} does not fill the reading frame edge-to-edge`);
+        assert(state.image.src === entry.image, `${entry.title} reading view uses the wrong image`);
+        const dimensionsMatch = entry.imageWidth && entry.imageHeight
+          ? state.image.naturalWidth === entry.imageWidth && state.image.naturalHeight === entry.imageHeight
+          : state.image.naturalWidth === state.image.naturalHeight;
+        assert(dimensionsMatch, `${entry.title} reading view does not use its registered square image`);
+        assert(state.image.objectFit === 'contain', `${entry.title} reading view crops its image`);
+        assert(state.paragraphs === entry.story.length, `${entry.title} reading view does not contain the complete story`);
+        assert(state.storyBackground === 'none' && state.bodyBackground === 'none', `${entry.title} retained a ruled-paper background treatment`);
+        assert(!state.bodyOverflow, `${entry.title} reading view overflows horizontally`);
+        assert(state.art.width > (viewport.width > 1000 ? 900 : 340), `${entry.title} reading artwork is not large enough`);
+        if (index < ILLUSTRATED_FICTION_ENTRIES.length - 1) {
+          await page.goBack({ waitUntil: 'domcontentloaded' });
+        }
+      }
+    } finally {
+      await context.close();
+    }
   }
-  console.log('✓ Runtime: clicking Medusa opens a large-art reading view with the complete story below');
+  console.log('✓ Runtime: every Fantasy card opens a large-art reading view with its complete story below');
 }
 
 async function testHomepageSectionNavigation(browser, origin) {
