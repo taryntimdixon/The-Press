@@ -1077,45 +1077,15 @@ def render_home_illustrated_fiction(entries: list[dict] | None = None) -> str:
 
 
 def render_illustrated_fiction_story_page(entry: dict) -> str:
-    image_width = f' width="{h(entry["imageWidth"])}"' if entry.get("imageWidth") else ""
-    image_height = f' height="{h(entry["imageHeight"])}"' if entry.get("imageHeight") else ""
-    story_markup = "\n".join(f"        <p>{h(paragraph)}</p>" for paragraph in entry["story"])
-    main = f"""
-<main class="page fantasy-reading-page">
-  <nav class="home-section-nav fantasy-reading__nav" aria-label="Fantasy navigation">
-    <div class="home-section-nav__links">
-      <a href="index.html">Front Page</a>
-      <a href="index.html#fantasy" aria-current="location">Fantasy</a>
-    </div>
-  </nav>
-  <article class="fantasy-reading" data-illustrated-fiction-reading="{h(entry['id'])}">
-    <header class="fantasy-reading__header">
-      <h1>{h(entry['title'])}</h1>
-    </header>
-    <figure class="fantasy-reading__art">
-      <img src="{h(entry['image'])}" alt="{h(entry['imageAlt'])}" decoding="async" fetchpriority="high"{image_width}{image_height} />
-    </figure>
-    <div class="fantasy-reading__story">
-{story_markup}
-    </div>
-    <p class="fantasy-reading__return"><a href="index.html#fantasy">Back to Fantasy</a></p>
-  </article>
-</main>
-""".strip()
-    return layout(
-        f"{entry['title']} — {SITE['name']}",
-        entry["teaser"],
-        entry["href"],
-        "page-fantasy-story press-front-system",
-        main,
-        include_progress=True,
-        social_image=entry["image"],
-        social_image_alt=entry["imageAlt"],
-        social_image_width=entry.get("imageWidth", ""),
-        social_image_height=entry.get("imageHeight", ""),
-        og_type="article",
-        extra_links=f'<link rel="stylesheet" href="homepage.css?v={h(asset_version("homepage.css"))}" />',
+    from tools.editorial_home import render_fantasy_story
+    head = page_head(
+        f"{entry['title']} — {SITE['name']}", entry["teaser"], entry["href"],
+        stylesheet="editorial-home.css", social_image=entry["image"],
+        social_image_alt=entry["imageAlt"], social_image_width=entry.get("imageWidth", ""),
+        social_image_height=entry.get("imageHeight", ""), og_type="article",
     )
+    extras = [{"title": e["title"], "url": e["href"], "section": "Fantasy", "dek": e["teaser"]} for e in ILLUSTRATED_FICTION_ENTRIES]
+    return render_fantasy_story(head, entry, extras, asset_version("editorial-home.js"))
 
 
 BELOW_FOLD_REMOTE_DIMS = {
@@ -2368,15 +2338,11 @@ def validate_below_fold_build_outputs() -> None:
         raise RuntimeError(f"Below the Fold issue pages missing after build: {', '.join(missing_pages)}")
 
     homepage = (SITE_DIR / "index.html").read_text(encoding="utf-8")
-    homepage_issue_markers = set(re.findall(r'data-below-fold-package="([^"]+)"', homepage))
-    if latest["slug"] not in homepage_issue_markers:
-        raise RuntimeError(f"Homepage must render the latest Below the Fold issue open: {latest['slug']}")
-    older_open_issues = sorted(slug for slug in homepage_issue_markers if slug != latest["slug"])
-    if older_open_issues:
-        raise RuntimeError(
-            "Homepage must not stack older Below the Fold issues open: "
-            + ", ".join(older_open_issues)
-        )
+    for issue in BELOW_FOLD_ISSUES:
+        if f'href="{issue["url"]}"' not in homepage:
+            raise RuntimeError(f"Homepage newsstand is missing {issue['slug']}")
+    if 'data-below-fold-package=' in homepage:
+        raise RuntimeError("Homepage should link to full issues, not embed their complete bodies")
 
     forbidden_pages = ("archive.html", "gallery.html")
     forbidden_link_re = re.compile(r'href=["\'](?:\./)?(below-the-fold(?:\.html|/[^"\'#?]+))', re.I)
@@ -2816,6 +2782,7 @@ def page_head(
     og_type: str = "website",
     social_title: str = "",
     base_href: str = "",
+    stylesheet: str = "styles.css",
 ) -> str:
     canonical_url = absolute_url(canonical)
     social = social_meta(
@@ -2860,7 +2827,7 @@ def page_head(
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="{h(PRESS_FONT_HREF)}" data-press-fonts />
-  <link rel="stylesheet" href="styles.css?v={h(STYLESHEET_VERSION)}" />
+  <link rel="stylesheet" href="{h(stylesheet)}?v={h(asset_version(stylesheet))}" />
   <link rel="manifest" href="site.webmanifest" />
   <link rel="alternate" type="application/rss+xml" title="{h(SITE['name'])} feed" href="feed.xml" />{extras_html}
 </head>
@@ -2974,156 +2941,29 @@ def layout(
 
 
 def render_homepage() -> str:
-    lead_panels = []
-    lead_buttons = []
-    lead_stories = homepage_lead_stories()
-    for idx, story in enumerate(lead_stories):
-        active = " is-active" if idx == 0 else ""
-        panel_width = f' width="{story["imageWidth"]}"' if story.get("imageWidth") else ""
-        panel_height = f' height="{story["imageHeight"]}"' if story.get("imageHeight") else ""
-        panel_loading = "eager" if idx == 0 else "lazy"
-        panel_priority = ' fetchpriority="high"' if idx == 0 else ' fetchpriority="low"'
-        panel_media = (
-            f'<img src="{h(story["image"])}" alt="{h(public_image_alt(story, story.get("title") or "Story thumbnail"))}" loading="{panel_loading}" decoding="async"{panel_priority}{panel_width}{panel_height} />'
-            if story.get("image")
-            else f'<div class="press-image-fallback"><span>{h(story.get("section") or "Story")}</span></div>'
-        )
-        lead_panels.append(
-            f"""
-<div class="lead-panel{active}" data-lead-panel id="lead-{idx}">
-  <div class="lead-panel__media">
-    {panel_media}
-  </div>
-  <div class="lead-panel__body">
-    <div>
-      <p class="eyebrow">Front Page • {h(story['section'])} • {h(story['type'])}</p>
-      <h2><a href="{h(story['filename'])}">{h(story['title'])}</a></h2>
-      <p class="lead-panel__dek">{h(story['dek'])}</p>
-      <p class="lead-panel__meta">{public_meta(story)}</p>
-    </div>
-    <div class="button-row">
-      <a class="button" href="{h(story['filename'])}">Read story</a>
-      <a class="button button--ghost" href="archive.html">Open archive</a>
-    </div>
-  </div>
-</div>
-""".strip()
-        )
-        thumb_width = f' width="{story["imageWidth"]}"' if story.get("imageWidth") else ""
-        thumb_height = f' height="{story["imageHeight"]}"' if story.get("imageHeight") else ""
-        thumb = (
-            f'<span class="lead-nav__thumb" aria-hidden="true"><img src="{h(story["image"])}" alt="" loading="lazy" decoding="async"{thumb_width}{thumb_height} /></span>'
-            if story.get("image")
-            else f'<span class="lead-nav__thumb lead-nav__thumb--fallback" aria-hidden="true"><span>{h(story["section"])}</span></span>'
-        )
-        side_slot = ""
-        if 1 <= idx <= 3:
-            side_slot = f' data-side-slot="left-{idx}"'
-        elif 4 <= idx <= 6:
-            side_slot = f' data-side-slot="right-{idx - 3}"'
-        lead_buttons.append(
-            f'<button class="lead-nav__button{" is-active" if idx == 0 else ""}" type="button" data-lead-button data-story-key="{h(story["filename"])}" data-target="lead-{idx}" aria-pressed="{str(idx == 0).lower()}"{side_slot}>{thumb}<span class="lead-nav__kicker">{h(story["section"])}</span><strong>{h(story["title"])}</strong></button>'
-        )
-    recency_stories = homepage_recency_stories(lead_stories)
-    recency_cards = "\n".join(recency_ticker_item(story) for story in recency_stories)
-    recency_cards_duplicate = "\n".join(recency_ticker_item(story, duplicate=True) for story in recency_stories)
-    main = f"""
-<main class="page">
-  <nav class="home-section-nav" aria-label="Jump to homepage sections">
-    <div class="home-section-nav__links">
-      <a href="#front-page" aria-current="location">Front Page</a>
-      <a href="#more-from-edition">More from the Edition</a>
-      <a href="#on-this-day">On This Day</a>
-      <a href="#below-the-fold">Below the Fold</a>
-      <a href="#fantasy">Fantasy</a>
-    </div>
-  </nav>
+    from tools.editorial_home import render_frontpage
 
-  <section class="home-hero" id="front-page">
-    <div class="home-hero__intro">
-      <p class="eyebrow">Front page</p>
-      <h1>{h(SITE['name'])}</h1>
-    </div>
-    <div class="lead-switcher" data-press-hero-layout="split-rail" data-press-hero-slots="{HOME_HERO_TARGET}">
-      <div class="lead-switcher__panels">
-        {' '.join(lead_panels)}
-      </div>
-      <div class="lead-nav" aria-label="Lead story switcher">
-        {' '.join(lead_buttons)}
-      </div>
-    </div>
-  </section>
-
-  <section class="home-recency-section" id="more-from-edition" data-home-recency-section>
-      <div class="section-heading-row">
-        <h2 class="section-heading">More from the edition</h2>
-        <a class="section-link" href="archive.html">Open archive</a>
-      </div>
-      <div class="home-recency-ticker" data-home-recency-ticker aria-label="The 15 newest stories that are not already in the hero">
-        <div class="home-recency-ticker__track">
-          <div class="home-recency-ticker__set">
-            {recency_cards}
-          </div>
-          <div class="home-recency-ticker__set" aria-hidden="true">
-            {recency_cards_duplicate}
-          </div>
-        </div>
-      </div>
-  </section>
-
-  <section class="home-grid">
-    <div class="home-grid__main">
-      <section class="on-this-day" id="on-this-day" data-on-this-day aria-live="polite">
-        <div class="on-this-day__header">
-          <div class="on-this-day__intro">
-            <h2 class="section-heading">On This Day History</h2>
-            <p class="section-copy" data-history-date>Loading today’s historical moment.</p>
-          </div>
-          <a class="on-this-day__count" href="on-this-day-preview.html">Preview all 365</a>
-        </div>
-        <div class="on-this-day__layout">
-          <div class="on-this-day__visuals">
-            <figure class="on-this-day__art" data-history-art aria-label="Photorealistic editorial scene for today’s historical moment"></figure>
-          </div>
-          <article class="on-this-day__story" data-history-card-link tabindex="0">
-            <p class="on-this-day__year" data-history-year></p>
-            <h3 data-history-title>Checking the archive</h3>
-            <p class="on-this-day__dek" data-history-dek></p>
-            <p data-history-text></p>
-            <div class="on-this-day__facts" data-history-facts></div>
-            <a class="on-this-day__more" href="on-this-day-event.html" data-history-detail-link>Read more about this</a>
-            <div class="on-this-day__meta">
-              <span data-history-rollover>Synced to the live clock; changes at 12:00 AM local time.</span>
-            </div>
-          </article>
-        </div>
-      </section>
-      {render_home_below_fold_newsstand()}
-      {render_home_illustrated_fiction()}
-    </div>
-  </section>
-
-</main>
-""".strip()
-    return layout(
-        f"{SITE['name']} — Front Page",
-        SITE["description"],
-        "",
-        "page-home press-front-system",
-        main,
-        jsonld=jsonld_org(),
+    leads = homepage_lead_stories()
+    stories = leads + homepage_recency_stories(leads, limit=24)
+    description = "Illustrated stories, independent reporting, history, and fiction from The Press. Explore the front page and the full archive."
+    head = page_head(
+        f"{SITE['name']} — Front Page", description, "", jsonld_org(),
+        stylesheet="editorial-home.css",
         social_image="assets/the-press-front-page-share-card.png",
-        social_image_alt="The Press front page share card with a four-story collage across technology, world, climate, and science",
-        social_image_width="1200",
-        social_image_height="630",
+        social_image_alt="The Press front page",
+        social_image_width=1200, social_image_height=630,
         social_title=SITE["name"],
-        extra_links=f'<link rel="stylesheet" href="homepage.css?v={h(asset_version("homepage.css"))}" />',
-        extra_scripts="\n".join([
-            f'<script src="assets/on-this-day-summary.js?v={h(asset_version("assets/on-this-day-summary.js"))}" defer></script>',
-            f'<script src="assets/on-this-day-artwork.js?v={h(asset_version("assets/on-this-day-artwork.js"))}" defer></script>',
-        ]),
-        post_scripts=f'<script src="homepage.js?v={h(asset_version("homepage.js"))}" defer></script>',
     )
+    return render_frontpage(head, stories, below_fold_issues_newest(), ILLUSTRATED_FICTION_ENTRIES, asset_version("editorial-home.js"))
+
+
+def write_homepage() -> None:
+    from tools.editorial_home import build_history_index
+
+    write_file(SITE_DIR / "index.html", render_homepage())
+    write_file(SITE_DIR / "data/frontpage-history.json", build_history_index(SITE_DIR))
+    for entry in ILLUSTRATED_FICTION_ENTRIES:
+        write_file(SITE_DIR / entry["href"], render_illustrated_fiction_story_page(entry))
 
 
 def render_archive() -> str:
@@ -3783,9 +3623,7 @@ def build() -> None:
             "Run tools/build_press_ecosystem.py for current live indexes, or set "
             "PRESS_ALLOW_LEGACY_MASTER_BUILD=1 if you intentionally want the older master-only rebuild."
         )
-    write_file(SITE_DIR / "index.html", render_homepage())
-    for entry in ILLUSTRATED_FICTION_ENTRIES:
-        write_file(SITE_DIR / entry["href"], render_illustrated_fiction_story_page(entry))
+    write_homepage()
     write_file(SITE_DIR / "archive.html", render_archive())
     write_file(SITE_DIR / "gallery.html", render_gallery())
     write_file(SITE_DIR / "authors.html", render_authors())
@@ -3807,4 +3645,11 @@ def build() -> None:
 
 
 if __name__ == "__main__":
-    build()
+    import argparse
+    parser = argparse.ArgumentParser(description="Build The Press")
+    parser.add_argument("--homepage-only", action="store_true", help="Refresh the front page and Fantasy presentation without replacing live indexes or reporting pages")
+    args = parser.parse_args()
+    if args.homepage_only:
+        write_homepage()
+    else:
+        build()

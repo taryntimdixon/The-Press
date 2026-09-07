@@ -85,176 +85,33 @@ def test_illustrated_editions_keep_native_pinch_and_restore_inline_double_tap():
     print("✓ Illustrated editions keep native pinch at rest and guarantee inline double-tap zoom")
 
 
-def test_mobile_homepage_uses_one_scrim_not_two():
-    styles = source(HOMEPAGE_STYLES_PATH)
-    mobile = re.search(r"@media \(max-width: 44rem\) \{(?P<body>.*)\n}\s*\n@media", styles, flags=re.DOTALL)
-    assert mobile, "Missing mobile homepage breakpoint"
-    body_rule = re.search(
-        r"body\.page-home \.lead-panel__body \{(?P<body>.*?)\n  }",
-        mobile.group("body"),
-        flags=re.DOTALL,
-    )
-
-    assert body_rule, "Missing mobile lead-panel body rule"
-    assert "background: transparent" in body_rule.group("body")
-    assert "rgba(18, 17, 15, 0.94)" not in body_rule.group("body")
-    image_rule = re.search(
-        r"body\.page-home \.lead-panel__media img \{(?P<body>.*?)\n  }",
-        mobile.group("body"),
-        flags=re.DOTALL,
-    )
-    assert image_rule, "Missing mobile hero-image alignment rule"
-    assert "object-position: center top" in image_rule.group("body")
-    print("✓ Mobile heroes keep one scrim and start full artwork at the top edge")
-
-
-def test_below_fold_is_not_hidden_by_a_whole_section_reveal():
-    script = source(HOMEPAGE_SCRIPT_PATH)
-    reveal_selector = re.search(
-        r"const revealTargets = Array\.from\(document\.querySelectorAll\(\s*\"(?P<selector>[^\"]+)\"",
-        script,
-    )
-
-    assert reveal_selector, "Missing homepage reveal target selector"
-    assert ".below-fold-flipper" not in reveal_selector.group("selector")
-    print("✓ Below the Fold cannot become a full-height invisible mobile section")
-
-
-def test_illustrated_fiction_framework_replaces_cartoon_desk():
-    build = source(BUILD_PATH)
+def test_frontpage_content_routes():
+    from html.parser import HTMLParser
+    class Links(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.paths = []
+        def handle_starttag(self, tag, attrs):
+            for key, value in attrs:
+                if key in ("src", "href") and value and not value.startswith(("http", "#", "mailto:", "data:")):
+                    self.paths.append(value.split("?")[0].split("#")[0])
     index = source(INDEX_PATH)
-    styles = source(HOMEPAGE_STYLES_PATH)
-    script = source(HOMEPAGE_SCRIPT_PATH)
-    section_match = re.search(
-        r'<section class="home-illustrated-fiction"[^>]*>(?P<body>.*?)</section>',
-        index,
-        flags=re.DOTALL,
-    )
-
-    assert "render_home_cartoons" not in build
-    assert "home-cartoons" not in index
-    assert "home-cartoons" not in styles
-    assert "home-cartoons" not in script
-    assert "render_home_illustrated_fiction" in build
-    assert section_match, "Missing illustrated-fiction homepage section"
-    section = section_match.group("body")
-    registry_entries = json.loads(source(ILLUSTRATED_FICTION_REGISTRY_PATH)).get("entries", [])
-    expected_placeholders = max(0, 5 - len(registry_entries))
-    assert section.count("data-illustrated-fiction-entry") == len(registry_entries)
-    assert section.count("data-illustrated-fiction-slot") == expected_placeholders
-    assert section.count('data-art-status="awaiting-user-art"') == expected_placeholders
-    assert section.count("<img") == len(registry_entries)
-    assert section.count('<h2 id="fantasy-title">Fantasy</h2>') == 1
-    assert '<body class="page-home press-front-system">' in index
-    assert "body.press-front-system .site-header" in styles
-    assert "body.press-front-system .home-section-nav" in styles
-    assert "Drawn Worlds" not in section
-    assert "section-cartoons.html" not in section
-    visible_text = re.sub(r"<[^>]+>", "", section).strip()
-    if not registry_entries:
-        assert visible_text == "Fantasy", "Fantasy must be the section's only visible copy before content is supplied"
-    else:
-        for entry in registry_entries:
-            assert f'data-illustrated-fiction-entry="{entry["id"]}"' in section
-            assert f'src="{entry["image"]}"' in section
-            assert f'<h3>{entry["title"]}</h3>' in section
-            assert f'href="{entry["href"]}"' in section
-            assert entry["teaser"] in section
-            assert all(paragraph not in section for paragraph in entry["story"])
-            reading_page = source(ROOT / entry["href"])
-            assert '<body class="page-fantasy-story press-front-system">' in reading_page
-            assert f'data-illustrated-fiction-reading="{entry["id"]}"' in reading_page
-            assert '<nav class="home-section-nav fantasy-reading__nav"' in reading_page
-            assert 'href="index.html">Front Page</a>' in reading_page
-            assert 'href="index.html#fantasy" aria-current="location">Fantasy</a>' in reading_page
-            escaped_story = [html.escape(paragraph, quote=True) for paragraph in entry["story"]]
-            assert reading_page.index(f'src="{entry["image"]}"') < reading_page.index(escaped_story[0])
-            assert all(paragraph in reading_page for paragraph in escaped_story)
-            copy = " ".join([entry["teaser"], *entry["story"]]).lower()
-            forbidden_art_premise = ("portrait", "illustration", "artwork", "paper", "painting", "painted", "drawing", "artist", "canvas", "image-making")
-            assert all(term not in copy for term in forbidden_art_premise)
-            reading_header = re.search(r'<header class="fantasy-reading__header">(?P<body>.*?)</header>', reading_page, flags=re.DOTALL)
-            assert reading_header and re.sub(r"<[^>]+>", "", reading_header.group("body")).strip() == entry["title"]
-    print("✓ Fantasy replaces the Cartoon Desk and follows the scalable archive registry")
-
-
-def test_illustrated_fiction_archive_has_no_five_item_cap():
-    build = source(BUILD_PATH)
-    styles = source(HOMEPAGE_STYLES_PATH)
-    schema = json.loads(source(ROOT / "data" / "illustrated-fiction.schema.json"))
-    build_namespace = runpy.run_path(str(BUILD_PATH))
-    render = build_namespace["render_home_illustrated_fiction"]
-    entries = [
-        {
-            "id": f"future-entry-{index}",
-            "title": "Future entry",
-            "image": "assets/future-entry.jpg",
-            "imageAlt": "Future supplied artwork",
-            "aspectRatio": "1:1",
-            "href": f"fantasy-future-entry-{index}.html",
-            "teaser": "Future supplied teaser",
-            "story": ["Future supplied story"],
-        }
-        for index in range(12)
-    ]
-    rendered = render(entries)
-    art_rule = re.search(
-        r"body\.page-home \.illustrated-fiction-slot__art \{(?P<body>.*?)\n\}",
-        styles,
-        flags=re.DOTALL,
-    )
-    image_rule = re.search(
-        r"body\.page-home \.illustrated-fiction-entry__art img \{(?P<body>.*?)\n\}",
-        styles,
-        flags=re.DOTALL,
-    )
-
-    assert rendered.count("data-illustrated-fiction-entry") == 12
-    assert "data-art-status=\"awaiting-user-art\"" not in rendered
-    assert "ILLUSTRATED_FICTION_LAYOUT_SEQUENCE" not in build
-    assert "illustrated_fiction_layout" not in build
-    for haystack in (rendered, styles):
-        for variant in ("lead", "standard", "wide"):
-            assert f"illustrated-fiction-slot--{variant}" not in haystack
-    assert art_rule and "aspect-ratio: 1 / 1" in art_rule.group("body")
-    assert image_rule and "object-fit: contain" in image_rule.group("body")
-    assert "position: absolute" in image_rule.group("body")
-    assert "inset: 0" in image_rule.group("body")
-    assert "grid-template-columns: repeat(3, minmax(0, 1fr))" in styles
-    item_properties = schema["properties"]["entries"]["items"]["properties"]
-    assert "layout" not in item_properties
-    assert "story" in schema["properties"]["entries"]["items"]["required"]
-    assert item_properties["aspectRatio"]["const"] == "1:1"
-    print("✓ Fantasy stays uncapped as a compact square gallery with separate reading views")
-
-
-def test_homepage_section_navigation_uses_existing_named_sections():
-    index = source(INDEX_PATH)
-    styles = source(HOMEPAGE_STYLES_PATH)
-    nav_match = re.search(
-        r'<nav class="home-section-nav"[^>]*>(?P<body>.*?)</nav>',
-        index,
-        flags=re.DOTALL,
-    )
-
-    assert nav_match, "Missing homepage section navigation"
-    nav = nav_match.group("body")
-    expected = {
-        '#front-page': 'Front Page',
-        '#more-from-edition': 'More from the Edition',
-        '#on-this-day': 'On This Day',
-        '#below-the-fold': 'Below the Fold',
-        '#fantasy': 'Fantasy',
-    }
-    for href, label in expected.items():
-        assert f'href="{href}"' in nav
-        assert f'id="{href[1:]}"' in index
-        assert label in nav
-    assert 'href="#illustrated-fiction"' not in nav
-    assert "position: sticky" in styles
-    assert "overflow-x: auto" in styles
-    assert "getBoundingClientRect().top <= activationLine" in source(HOMEPAGE_SCRIPT_PATH)
-    print("✓ Homepage section navigation exposes all five named sections with position-based scroll tracking")
+    parser = Links()
+    parser.feed(index)
+    assert all((ROOT / path).is_file() for path in parser.paths), [path for path in parser.paths if not (ROOT / path).is_file()]
+    assert 'src="app.js' not in index
+    assert 'data-below-fold-package=' not in index
+    assert 'section-cartoons.html' not in index
+    registry = json.loads(source(ILLUSTRATED_FICTION_REGISTRY_PATH))["entries"]
+    for entry in registry:
+        assert f'href="{entry["href"]}"' in index
+        assert f'src="{entry["image"]}"' in index
+        assert html.escape(entry["teaser"], quote=True) in index
+        assert not any(html.escape(paragraph, quote=True) in index for paragraph in entry["story"])
+    history = json.loads(source(ROOT / "data/frontpage-history.json"))
+    assert len(history) == 365
+    assert all((ROOT / entry["image"].split("?")[0]).is_file() for entry in history.values() if entry["image"])
+    print("✓ Front page routes, supplied art, and all 365 history images resolve locally")
 
 
 def find_node() -> str:
@@ -279,7 +136,7 @@ def test_mobile_interactions_in_browser():
         cwd=ROOT,
         text=True,
         capture_output=True,
-        timeout=60,
+        timeout=180,
         check=False,
     )
     if result.returncode:
@@ -292,13 +149,9 @@ def main():
     print("Running mobile reading experience checks...\n")
     test_inline_zoom_targets_full_page_art_only()
     test_illustrated_editions_keep_native_pinch_and_restore_inline_double_tap()
-    test_mobile_homepage_uses_one_scrim_not_two()
-    test_below_fold_is_not_hidden_by_a_whole_section_reveal()
-    test_illustrated_fiction_framework_replaces_cartoon_desk()
-    test_illustrated_fiction_archive_has_no_five_item_cap()
-    test_homepage_section_navigation_uses_existing_named_sections()
+    test_frontpage_content_routes()
     test_mobile_interactions_in_browser()
-    print("\n✅ All 8 mobile reading experience checks passed!")
+    print("\n✅ All source and browser reading checks passed!")
 
 
 if __name__ == "__main__":

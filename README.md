@@ -33,12 +33,20 @@ python studio/build.py
 - Story headings inside the article body become the Timeline; place and entity lenses come from the local dictionaries in `app.js`.
 - `build.py` and the daily automation now include the living kit automatically through `app.js`, so new stories get Place Lens, Share Studio, Source Board, Timeline, Entity Cards, Listen, Focus, Follow Topic, reading memory, and the combined reading-progress/top control without an API.
 
-## Homepage hero standard
+## Front page and Fantasy
 
-- The homepage hero is a permanent 7-story system: 1 center lead plus 3 side cards on the left and 3 on the right.
-- Fresh image-ready stories automatically seed the hero before manual `homepage.leadOrder` or `placements.json` entries, so a newly published story with a thumbnail can appear without hand-editing the hero list.
-- Manual hero lists still guide the remaining rotation, but they no longer block new stories from entering the hero.
-- Keep every hero candidate supplied with a real local `image`, `imageAlt`, and dimensions when possible; the build and app preserve 16:9 side thumbnails so new cards do not squeeze older ones.
+The front page uses `tools/editorial_home.py`, `editorial-home.css`, and `editorial-home.js`. Story metadata and order still come from `master-edition.json` and the live content index. The first configured story is the stable lead; the next two are companion stories. The edition grid adds section filters and a reading list stored on the reader's device. Search loads the full index on demand.
+
+Fantasy uses the existing supplied artwork and story registry. The homepage shows the complete square illustrations and teasers; each reading page shares the front-page masthead and presents its full story below the artwork. Below the Fold is a shelf of links to complete issues. The compact history index is generated from the existing daily-history sources.
+
+Refresh this presentation while preserving reporting pages and live indexes:
+
+```bash
+python3 build.py --homepage-only
+python3 tools/test_mobile_reading_experience.py
+```
+
+The full legacy build also regenerates these surfaces. It retains its explicit opt-in because it replaces the richer search index; use the homepage-only command for presentation changes. The browser checks cover five widths, navigation, search and failures, bookmarks, dark mode, supplied-art reading views, and existing article zoom behavior.
 
 ## What gets rebuilt
 
